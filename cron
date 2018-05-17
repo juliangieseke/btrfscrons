@@ -86,7 +86,7 @@ echo ==============================================
 echo Start ${CRONNAME} on ${HOSTNAME}
 
 # include host specific part, if it exists
-[ -f "${SCRIPT_PATH}/includes/${HOSTNAME}" ] && source "${SCRIPT_PATH}/includes/${HOSTNAME}"
+[ -f "${SCRIPT_PATH}/cron.${HOSTNAME}" ] && source "${SCRIPT_PATH}/cron.${HOSTNAME}" || echo "Unknown hostname"
 
 # print done block
 echo Done ${CRONNAME} on ${HOSTNAME}
