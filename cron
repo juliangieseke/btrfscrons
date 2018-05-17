@@ -56,7 +56,7 @@ function _backup {
   if [ $(btrfs sub show $SRC > /dev/null 2>&1; echo $?) -ne 0 ]; then
     exit 1
   fi
-  
+
   echo Backup $SRC to $DST
   rsync $RSYNCOPTS "${SRC}" "${DST}"
 }
@@ -79,7 +79,7 @@ fi
 
 # setup lockfile & trap
 lockfile -60 -r10  "${SCRIPT_PATH}/${CRONNAME}.lock"
-trap "rm -f \"${SCRIPT_PATH}/${CRONNAME}.lock\";exit 1" EXIT
+trap "rm -f \"${SCRIPT_PATH}/${CRONNAME}.lock\"" EXIT
 
 # printing start block
 echo 
@@ -92,3 +92,5 @@ echo Start ${CRONNAME} on ${HOSTNAME}
 # print done block
 echo Done ${CRONNAME} on ${HOSTNAME}
 echo =======================
+
+exit 0
