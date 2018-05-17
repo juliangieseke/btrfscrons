@@ -12,6 +12,6 @@ _backup /mnt/volume/resilio /mnt/volume/backups/
 _snapshot /mnt/volume/backups
 
 # rsync contents to remote destination
-vpnc hhs.conf
+# vpnc hhs
 _backup /mnt/volume/speichersee/ speichersee@192.168.187.11:/mnt/volume/speichersee/
-vpnc-disconnect
+# vpnc-disconnect
