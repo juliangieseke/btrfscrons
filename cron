@@ -62,8 +62,7 @@ function _backup {
 }
 
 # setup logs
-LOGFILE="${SCRIPT_PATH}/logs/${CRONNAME}"
-
+LOGFILE="${SCRIPT_PATH}/cron.log"
 # remove old logs before we add our own to ensure we dont delete anything from this run
 [ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
 tail -n 1000 ${LOGFILE} | sponge ${LOGFILE}
@@ -78,12 +77,12 @@ else
 fi
 
 # setup lockfile & trap
-lockfile -60 -r10  "${SCRIPT_PATH}/${CRONNAME}.lock"
-trap "rm -f \"${SCRIPT_PATH}/${CRONNAME}.lock\"" EXIT
+lockfile -60 -r10  "${SCRIPT_PATH}/cron.lock"
+trap "rm -f \"${SCRIPT_PATH}/cron.lock\"" EXIT
 
 # printing start block
 echo 
-echo =======================
+echo ==============================================
 echo Start ${CRONNAME} on ${HOSTNAME}
 
 # include host specific part, if it exists
@@ -91,6 +90,6 @@ echo Start ${CRONNAME} on ${HOSTNAME}
 
 # print done block
 echo Done ${CRONNAME} on ${HOSTNAME}
-echo =======================
+echo ==============================================
 
 exit 0
