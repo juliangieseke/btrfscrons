@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# include all the magic :)
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
-source "${SCRIPT_PATH}/includes/_header"
-
 # create snapshots of "active" subvolumes (24/7 Disk)
 _snapshot /mnt/volume/datenteich
 _snapshot /mnt/volume/resilio
@@ -15,5 +11,5 @@ _backup /mnt/volume/resilio /mnt/volume/backups/
 # create snapshot of backup volume (Backup Disk)
 _snapshot /mnt/volume/backups
 
-# include moar magic :)
-source "${SCRIPT_PATH}/includes/_footer"
+# rsync contents to remote destination
+_backup /mnt/volume/datenteich/ datenteich@192.168.187.12:/mnt/volume/datenteich/

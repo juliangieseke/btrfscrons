@@ -1,7 +1,0 @@
-#!/usr/bin/env bash
-
-set -e
-
-# print done block
-echo Done ${CRONNAME} cron
-echo =======================
