@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+
+set -e
+
+# debug
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# cron name, required
+CRONNAME=${CRONNAME:-''}
+[ -n "${1}" ] && CRONNAME=${1}
+
+# set KEEPDAYS depending on CRONNAME - or exit if unknown.
+case $CRONNAME in
+  hourly)
+    KEEPDAYS=1
+    ;;
+  daily)
+    KEEPDAYS=30
+    ;;
+  weekly)
+    KEEPDAYS=90
+    ;;
+  monthly)
+    KEEPDAYS=360
+    ;;
+  *)
+    exit 1
+esac
+
+# set SCRIPT_PATH, used for log- & lockfiles
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+# this creates a new snapshow in ./#snapshots folder
+# $1 = subvolume to create snapshot from
+# uses $CRONNAME & KEEPDAYS
+function _snapshot {
+  local SUBVOL=${1:-''}
+  btrfs subvolume snapshot -r "${SUBVOL}" "${SUBVOL}.snapshots/$(date +%F-%H-%M-%S)-${CRONNAME}"
+  find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-${CRONNAME}" -ctime ${KEEPDAYS} -exec btrfs subvolume delete '{}' \;
+}
+
+# this rsyncs the given source to a given destination
+# used to copy data to backup disk
+# $1 = src
+# $2 = dst
+function _backup {
+  local SRC=${1:-''}
+  local DST=${2:-''}
+  local RSYNCOPTS="${RSYNCOPTS} --archive --delete"
+  
+  echo Backup $SRC to $DST
+  rsync $RSYNCOPTS "${SRC}" "${DST}"
+}
+
+# setup logs
+LOGFILE="${SCRIPT_PATH}/logs/${CRONNAME}"
+
+# remove old logs before we add our own ones to ensure we dont delete anything from this run
+[ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
+tail -n 1000 ${LOGFILE} | sponge ${LOGFILE}
+
+# this saves everything to logfile and prints stderr to screen. that way cron sends an email only if something failed.
+# ref https://stackoverflow.com/a/19279694
+if [ -n "${DEBUG}" ]; then
+  exec > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&2)
+else
+  exec 3>&2
+  exec > >(ts | tee -a ${LOGFILE} >/dev/null) 2> >(ts | tee -a ${LOGFILE} >&3)
+fi
+
+# setup lockfile & trap
+lockfile -60 -r10  "${SCRIPT_PATH}/${CRONNAME}.lock"
+trap "rm -f \"${SCRIPT_PATH}/${CRONNAME}.lock\"" EXIT
+
+# printing start block
+echo 
+echo =======================
+echo Start ${CRONNAME} cron
