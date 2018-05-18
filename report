@@ -9,31 +9,30 @@ DEBUG=${DEBUG:-''}
 # set SCRIPT_PATH, used for external refs
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
-echo Upgradeable packages
-apt list --upgradeable
-
-echo
+echo Status Report for $(hostname)
 echo ==============================================
-
+echo
+cat /var/run/motd.dynamic
+echo ==============================================
+echo
 echo Disk usage
-df -hl | grep /dev/nvme0n1p2
-df -hl | grep /mnt/disk
-
+df -hl
+echo
 echo
 echo ==============================================
-
+echo
 echo Mounts
 mount | grep /mnt
 echo "Count: $(mount | grep /mnt | wc -l)"
-
+echo
 echo
 echo ==============================================
-
+echo
 echo Latest cron logs
 tail -n 20 ${SCRIPT_PATH}/cron.log
-
+echo
 echo
 echo ==============================================
-
+echo
 echo Latest syslog
 journalctl | tail -n 50

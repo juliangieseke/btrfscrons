@@ -29,6 +29,7 @@ case $CRONNAME in
     KEEPDAYS=360
     ;;
   *)
+    echo "ERROR: No valid \$CRONNAME given."
     exit 1
 esac
 
@@ -79,7 +80,6 @@ fi
 # setup lockfile & trap
 lockfile -60 -r10  "${SCRIPT_PATH}/cron.lock"
 trap "rm -f \"${SCRIPT_PATH}/cron.lock\"" EXIT
-trap "echo An Error Occured" ERR
 
 # printing start block
 echo 
@@ -90,7 +90,7 @@ echo Start ${CRONNAME} on ${HOSTNAME}
 [ ! -f "${SCRIPT_PATH}/cron.${HOSTNAME}" ] && echo "Unknown hostname" || source "${SCRIPT_PATH}/cron.${HOSTNAME}"
 
 # print done block
-echo Done ${CRONNAME} on ${HOSTNAME}
+echo Success ${CRONNAME} on ${HOSTNAME}
 echo ==============================================
 
 exit 0
