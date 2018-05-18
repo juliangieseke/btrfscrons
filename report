@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -e
+
+# debug
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# set SCRIPT_PATH, used for external refs
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+echo Upgradeable packages
+apt list --upgradeable
+
+echo
+echo ==============================================
+
+echo Disk usage
+df -hl | grep /dev/nvme0n1p2
+df -hl | grep /mnt/disk
+
+echo
+echo ==============================================
+
+echo Mounts
+mount | grep /mnt
+echo "Count: $(mount | grep /mnt | wc -l)"
+
+echo
+echo ==============================================
+
+echo Latest cron logs
+tail -n 20 ${SCRIPT_PATH}/cron.log
+
+echo
+echo ==============================================
+
+echo Latest syslog
+journalctl | tail -n 50
