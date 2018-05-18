@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+
+# print header
+echo 
+echo ==============================================
+echo Start
+
+# sets $CRONTYPE
+source ${SCRIPT_PATH}/inc/crontype /mnt/volume/speichersee
+# sets $KEEPDAYS
+source ${SCRIPT_PATH}/inc/keepdays ${CRONTYPE}
+
+# create snapshot
+${SCRIPT_PATH}/bin/snapshot /mnt/volume/speichersee ${CRONTYPE} ${KEEPDAYS}
+
+if [ ${CRONTYPE} != 'hourly' ]
+then
+  ${SCRIPT_PATH}/bin/backup /mnt/volume/speichersee /mnt/volume/backups/
+  /usr/sbin/vpnc hhs
+  ${SCRIPT_PATH}/bin/backup /mnt/volume/speichersee speichersee@192.168.187.11:/mnt/volume/
+  /usr/sbin/vpnc-disconnect
+fi
+
+# print footer
+echo Success
+echo ==============================================
+echo

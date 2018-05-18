@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+KEEPDAYS=${KEEPDAYS:-0}
+
+if [ ${KEEPDAYS} -ne 0 ]
+then
+  echo "Manually set \$KEEPDAYS to ${KEEPDAYS}"
+  return
+fi
+
+case ${1} in
+  hourly)
+    KEEPDAYS=1
+    ;;
+  daily)
+    KEEPDAYS=30
+    ;;
+  weekly)
+    KEEPDAYS=90
+    ;;
+  monthly)
+    KEEPDAYS=360
+    ;;
+esac

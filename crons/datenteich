@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# print header
+echo 
+echo ==============================================
+echo Start
+
+# sets $CRONTYPE
+source ${SCRIPT_PATH}/inc/crontype /mnt/volume/datenteich
+# sets $KEEPDAYS
+source ${SCRIPT_PATH}/inc/keepdays ${CRONTYPE}
+
+# create snapshot
+${SCRIPT_PATH}/bin/snapshot /mnt/volume/datenteich ${CRONTYPE} ${KEEPDAYS}
+
+if [ ${CRONTYPE} != 'hourly' ]
+then
+  ${SCRIPT_PATH}/bin/backup /mnt/volume/datenteich /mnt/volume/backups/
+  /usr/sbin/vpnc bms
+  ${SCRIPT_PATH}/bin/backup /mnt/volume/datenteich datenteich@192.168.187.12:/mnt/volume/
+  /usr/sbin/vpnc-disconnect
+fi
+
+# print footer
+echo Success
+echo ==============================================
+echo

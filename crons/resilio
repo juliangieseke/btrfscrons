@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# print header
+echo 
+echo ==============================================
+echo Start
+
+# sets $CRONTYPE
+source ${SCRIPT_PATH}/inc/crontype /mnt/volume/resilio
+# sets $KEEPDAYS
+source ${SCRIPT_PATH}/inc/keepdays ${CRONTYPE}
+
+# create snapshot
+${SCRIPT_PATH}/bin/snapshot /mnt/volume/resilio ${CRONTYPE} ${KEEPDAYS}
+
+if [ ${CRONTYPE} != 'hourly' ]
+then
+  ${SCRIPT_PATH}/bin/backup /mnt/volume/resilio /mnt/volume/backups/
+fi
+
+# print footer
+echo Success
+echo ==============================================
+echo

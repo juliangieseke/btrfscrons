@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+SUBVOLUME=${1:-''}
+CRONTYPE=${2:-'hourly'}
+KEEPDAYS=${3:-'1'}
+
+# update timestamp, fails if subvolume is ""
+touch ${SUBVOLUME}
+sync
+btrfs subvolume snapshot -r "${SUBVOLUME}" "${SUBVOLUME}.snapshots/$(date +%F-%H-%M-%S)-${CRONTYPE}"
+
+[ ${KEEPDAYS} -gt 0 ] \
+  && find "${SUBVOLUME}.snapshots/" -maxdepth 1 -type d -name "*-${CRONTYPE}" -ctime ${KEEPDAYS} -exec btrfs subvolume delete '{}' \; \
+  || echo "Cleanup disabled for ${CRONTYPE}"

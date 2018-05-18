@@ -2,104 +2,49 @@
 
 set -e
 
-# debug
+#################################################
+# debug stuff
 DEBUG=${DEBUG:-''}
 VERBOSE=${VERBOSE:-''}
 [ -n "${DEBUG}" ] && set -x
 
-# hostname, required
-HOSTNAME=${HOSTNAME:-''}
-[ -n "${1}" ] && HOSTNAME=${1}
 
-# set SCRIPT_PATH, used for log- & lockfiles
+#################################################
+# cronname, required, has to match file in crons folder
+# defines the file to include 
+CRONNAME=${CRONNAME:-''}
+[ -n "${1}" ] && CRONNAME=${1}
+
+
+#################################################
+# set SCRIPT_PATH
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
-# this creates a new snapshow in ./#snapshots folder
-# $1 = subvolume to create snapshot from
-function _snapshot {
-  local SUBVOL=${1:-''}
 
-  # default (mainly for testing)
-  local CRONTYPE='minutely'
-  local KEEPDAYS=1
-  
-  # hourly
-  if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-hourly" -ctime -1 | wc -l) -eq 0 ]
-  then
-    CRONTYPE='hourly'
-    KEEPDAYS=1
-  fi
-
-  # daily
-  if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-daily" -ctime -1 | wc -l) -eq 0 ]
-  then
-    CRONTYPE='daily'
-    KEEPDAYS=30
-  fi
-
-  # weekly
-  if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-weekly" -ctime -7 | wc -l) -eq 0 ]
-  then
-    CRONTYPE='weekly'
-    KEEPDAYS=90
-  fi
-
-  # monthly
-  if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-monthly" -ctime -28 | wc -l) -eq 0 ]
-  then
-    CRONTYPE='monthly'
-    KEEPDAYS=390
-  fi
-
-  # create new snapshot with CRONTYPE
-  btrfs subvolume snapshot -r "${SUBVOL}" "${SUBVOL}.snapshots/$(date +%F-%H-%M-%S)-${CRONTYPE}"
-
-  # delete old snapshots for this CRONTYPE
-  find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-${CRONTYPE}" -ctime ${KEEPDAYS} -exec btrfs subvolume delete '{}' \;
-}
-
-# this rsyncs the given source to a given destination
-# used to copy data to backup disk
-# $1 = src
-# $2 = dst
-function _backup {
-  local SRC=${1:-''}
-  local DST=${2:-''}
-  local RSYNCOPTS="${RSYNCOPTS:-""}"
-  
-  # check if src is btrfs volume, fails and stops the script if not
-  btrfs sub show $SRC > /dev/null
-
-  echo Backup $SRC to $DST
-  rsync --archive --delete $RSYNCOPTS "${SRC}" "${DST}"
-}
-
+#################################################
 # setup logs
 LOGFILE="${SCRIPT_PATH}/cron.log"
 
 # this saves everything to logfile and prints stderr to screen. that way cron sends an email only if something failed.
 # ref https://stackoverflow.com/a/19279694
 if [ -n "${DEBUG}" ] || [ -n "${VERBOSE}" ]; then
-  exec > >(ts | tee -a ${LOGFILE}) 2> >(ts | tee -a ${LOGFILE} >&2)
+  exec > >(ts "${CRONNAME} %H:%M:%S" | tee -a ${LOGFILE}) 2> >(ts "${CRONNAME} %H:%M:%S" | tee -a ${LOGFILE} >&2)
 else
   exec 3>&2
-  exec > >(ts | tee -a ${LOGFILE} >/dev/null) 2> >(ts | tee -a ${LOGFILE} >&3)
+  exec > >(ts "${CRONNAME} %H:%M:%S" | tee -a ${LOGFILE} >/dev/null) 2> >(ts "${CRONNAME} %H:%M:%S" | tee -a ${LOGFILE} >&3)
 fi
 
+
+#################################################
 # setup lockfile & trap
-lockfile -599 -r5  "${SCRIPT_PATH}/cron.lock"
-trap "rm -f \"${SCRIPT_PATH}/cron.lock\"" EXIT
+lockfile -60 -r50  "${SCRIPT_PATH}/${CRONNAME}.lock"
+trap "rm -f \"${SCRIPT_PATH}/${CRONNAME}.lock\"" EXIT
 
-# printing start block
-echo 
-echo ==============================================
-echo Start
 
+#################################################
 # include host specific part, if it exists
-[ ! -f "${SCRIPT_PATH}/cron.${HOSTNAME}" ] && (echo "ERROR: Unknown hostname" && exit 1) || source "${SCRIPT_PATH}/cron.${HOSTNAME}"
+source "${SCRIPT_PATH}/crons/${CRONNAME}"
 
-# print done block
-echo Success
-echo ==============================================
 
-exit 0
+#################################################
+# done.
