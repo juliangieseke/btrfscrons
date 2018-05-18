@@ -89,13 +89,13 @@ trap "rm -f \"${SCRIPT_PATH}/cron.lock\"" EXIT
 # printing start block
 echo 
 echo ==============================================
-echo Start ${CRONNAME} on ${HOSTNAME}
+echo Start
 
 # include host specific part, if it exists
-[ ! -f "${SCRIPT_PATH}/cron.${HOSTNAME}" ] && echo "Unknown hostname" || source "${SCRIPT_PATH}/cron.${HOSTNAME}"
+[ ! -f "${SCRIPT_PATH}/cron.${HOSTNAME}" ] && (echo "ERROR: Unknown hostname" && exit 1) || source "${SCRIPT_PATH}/cron.${HOSTNAME}"
 
 # print done block
-echo Success ${CRONNAME} on ${HOSTNAME}
+echo Success
 echo ==============================================
 
 exit 0
