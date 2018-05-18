@@ -58,14 +58,14 @@ function _snapshot {
 function _backup {
   local SRC=${1:-''}
   local DST=${2:-''}
-  local RSYNCOPTS="${RSYNCOPTS:-"--archive --delete"}"
+  local RSYNCOPTS="${RSYNCOPTS:-""}"
   
   if [ $(btrfs sub show $SRC > /dev/null 2>&1; echo $?) -ne 0 ]; then
     exit 1
   fi
 
   echo Backup $SRC to $DST
-  rsync $RSYNCOPTS "${SRC}" "${DST}"
+  rsync --archive --delete $RSYNCOPTS "${SRC}" "${DST}"
 }
 
 # setup logs
