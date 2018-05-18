@@ -79,6 +79,7 @@ fi
 # setup lockfile & trap
 lockfile -60 -r10  "${SCRIPT_PATH}/cron.lock"
 trap "rm -f \"${SCRIPT_PATH}/cron.lock\"" EXIT
+trap "echo An Error Occured" ERR
 
 # printing start block
 echo 
