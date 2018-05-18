@@ -19,9 +19,16 @@ SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 function _snapshot {
   local SUBVOL=${1:-''}
 
-  # default
-  local CRONTYPE='hourly'
+  # default (mainly for testing)
+  local CRONTYPE='minutely'
   local KEEPDAYS=1
+  
+  # hourly
+  if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-hourly" -ctime -1 | wc -l) -eq 0 ]
+  then
+    CRONTYPE='hourly'
+    KEEPDAYS=1
+  fi
 
   # daily
   if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-daily" -ctime -1 | wc -l) -eq 0 ]
