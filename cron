@@ -4,6 +4,7 @@ set -e
 
 # debug
 DEBUG=${DEBUG:-''}
+VERBOSE=${VERBOSE:-''}
 [ -n "${DEBUG}" ] && set -x
 
 # hostname, required
@@ -75,8 +76,8 @@ tail -n 1000 ${LOGFILE} | sponge ${LOGFILE}
 
 # this saves everything to logfile and prints stderr to screen. that way cron sends an email only if something failed.
 # ref https://stackoverflow.com/a/19279694
-if [ -n "${DEBUG}" ]; then
-  exec > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&2)
+if [ -n "${DEBUG}" ] || [ -n "${VERBOSE}" ]; then
+  exec > >(ts | tee -a ${LOGFILE}) 2> >(ts | tee -a ${LOGFILE} >&2)
 else
   exec 3>&2
   exec > >(ts | tee -a ${LOGFILE} >/dev/null) 2> >(ts | tee -a ${LOGFILE} >&3)
