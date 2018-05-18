@@ -21,18 +21,12 @@ echo
 echo
 echo ==============================================
 echo
-echo Mounts
+echo Mounts "(Count: $(mount | grep /mnt | wc -l))"
 mount | grep /mnt
-echo "Count: $(mount | grep /mnt | wc -l)"
 echo
 echo
 echo ==============================================
 echo
-echo Latest cron logs
-tail -n 20 ${SCRIPT_PATH}/cron.log
-echo
-echo
-echo ==============================================
-echo
-echo Latest syslog
-journalctl | tail -n 50
+echo Cron logs
+cat ${SCRIPT_PATH}/cron.log
+echo "" > ${SCRIPT_PATH}/cron.log

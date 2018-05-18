@@ -76,9 +76,6 @@ function _backup {
 
 # setup logs
 LOGFILE="${SCRIPT_PATH}/cron.log"
-# remove old logs before we add our own to ensure we dont delete anything from this run
-[ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
-tail -n 1000 ${LOGFILE} | sponge ${LOGFILE}
 
 # this saves everything to logfile and prints stderr to screen. that way cron sends an email only if something failed.
 # ref https://stackoverflow.com/a/19279694
