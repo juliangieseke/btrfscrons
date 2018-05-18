@@ -4,14 +4,19 @@
 _snapshot /mnt/volume/datenteich
 _snapshot /mnt/volume/resilio
 
-# rsync contents to backup disk
-_backup /mnt/volume/datenteich /mnt/volume/backups/
-_backup /mnt/volume/resilio /mnt/volume/backups/
+if [ ${CRONTYPE} == 'daily' ] || [ ${CRONTYPE} == 'weekly' ] || [ ${CRONTYPE} == 'monthly' ]
+then
+  # rsync contents to backup disk
+  _backup /mnt/volume/datenteich /mnt/volume/backups/
+  _backup /mnt/volume/resilio /mnt/volume/backups/
 
-# create snapshot of backup volume (Backup Disk)
-_snapshot /mnt/volume/backups
+  # create snapshot of backup volume (Backup Disk)
+  _snapshot /mnt/volume/backups
 
-# rsync contents to remote destination
-/usr/sbin/vpnc bms
-_backup /mnt/volume/datenteich/ datenteich@192.168.187.12:/mnt/volume/datenteich/
-/usr/sbin/vpnc-disconnect
+  # rsync contents to remote destination
+  /usr/sbin/vpnc bms
+  _backup /mnt/volume/datenteich/ datenteich@192.168.187.12:/mnt/volume/datenteich/
+  /usr/sbin/vpnc-disconnect
+else 
+  echo "Skipping Backups for \$CRONTYPE '${CRONTYPE}'"
+fi
