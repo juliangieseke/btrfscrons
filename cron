@@ -10,39 +10,44 @@ DEBUG=${DEBUG:-''}
 HOSTNAME=${HOSTNAME:-''}
 [ -n "${1}" ] && HOSTNAME=${1}
 
-# cron name, required
-CRONNAME=${CRONNAME:-''}
-[ -n "${2}" ] && CRONNAME=${2}
-
-# set KEEPDAYS depending on CRONNAME - or exit if unknown.
-case $CRONNAME in
-  hourly)
-    KEEPDAYS=1
-    ;;
-  daily)
-    KEEPDAYS=30
-    ;;
-  weekly)
-    KEEPDAYS=90
-    ;;
-  monthly)
-    KEEPDAYS=360
-    ;;
-  *)
-    echo "ERROR: No valid \$CRONNAME given."
-    exit 1
-esac
-
 # set SCRIPT_PATH, used for log- & lockfiles
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 # this creates a new snapshow in ./#snapshots folder
 # $1 = subvolume to create snapshot from
-# uses $CRONNAME & KEEPDAYS
 function _snapshot {
   local SUBVOL=${1:-''}
-  btrfs subvolume snapshot -r "${SUBVOL}" "${SUBVOL}.snapshots/$(date +%F-%H-%M-%S)-${CRONNAME}"
-  find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-${CRONNAME}" -ctime ${KEEPDAYS} -exec btrfs subvolume delete '{}' \;
+
+  # default
+  local CRONTYPE='hourly'
+  local KEEPDAYS=1
+
+  # daily
+  if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-daily" -ctime -1 | wc -l) -eq 0 ]
+  then
+    CRONTYPE='daily'
+    KEEPDAYS=30
+  fi
+
+  # weekly
+  if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-weekly" -ctime -7 | wc -l) -eq 0 ]
+  then
+    CRONTYPE='weekly'
+    KEEPDAYS=90
+  fi
+
+  # monthly
+  if [ $(find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-monthly" -ctime -28 | wc -l) -eq 0 ]
+  then
+    CRONTYPE='monthly'
+    KEEPDAYS=390
+  fi
+
+  # create new snapshot with CRONTYPE
+  btrfs subvolume snapshot -r "${SUBVOL}" "${SUBVOL}.snapshots/$(date +%F-%H-%M-%S)-${CRONTYPE}"
+
+  # delete old snapshots for this CRONTYPE
+  find "${SUBVOL}.snapshots/" -maxdepth 1 -type d -name "*-${CRONTYPE}" -ctime ${KEEPDAYS} -exec btrfs subvolume delete '{}' \;
 }
 
 # this rsyncs the given source to a given destination
