@@ -12,6 +12,6 @@ _backup /mnt/volume/resilio /mnt/volume/backups/
 _snapshot /mnt/volume/backups
 
 # rsync contents to remote destination
-# vpnc bms
+vpnc bms
 _backup /mnt/volume/datenteich/ datenteich@192.168.187.12:/mnt/volume/datenteich/
-# vpnc-disconnect
+vpnc-disconnect
