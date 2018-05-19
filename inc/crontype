@@ -30,3 +30,9 @@ if [ $(find "${1}.snapshots/" -maxdepth 1 -type d -name "*-monthly" -ctime -28 |
 then
   CRONTYPE='monthly'
 fi
+
+if [[ "${CRONTYPE}" != 'hourly' && ( $(date +%H) -lt 2 || $(date +%H) -gt 5 ) ]]
+then
+  echo "Deferring ${CRONTYPE} until tonight."
+  CRONTYPE='hourly'
+fi
