@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
-DEBUG=${DEBUG:-''}
-[ -n "${DEBUG}" ] && set -x
-
 KEEPDAYS=${KEEPDAYS:-0}
 
 if [ ${KEEPDAYS} -ne 0 ]

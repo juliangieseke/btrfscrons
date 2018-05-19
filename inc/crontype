@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
-DEBUG=${DEBUG:-''}
-[ -n "${DEBUG}" ] && set -x
-
 if [ -n "${CRONTYPE}" ]
 then
   echo "Manually set \$CRONTYPE to ${CRONTYPE}"
