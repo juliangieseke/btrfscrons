@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+SUBVOLUME=${1:-''}
+CRONTYPE=${2:-'hourly'}
+KEEPDAYS=${3:-'1'}
+
+SNAPSHOTNAME="$(date +%F-%H-%M-%S)-${CRONTYPE}"
+
+# update timestamp, fails if subvolume is ""
+touch ${SUBVOLUME}
+sync
+
+echo "Create ${CRONTYPE} snapshot"
+btrfs subvolume snapshot -r "${SUBVOLUME}" "${SUBVOLUME}.snapshots/${SNAPSHOTNAME}" > /dev/null

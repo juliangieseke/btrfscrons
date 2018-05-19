@@ -5,15 +5,12 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
 SUBVOLUME=${1:-''}
 CRONTYPE=${2:-'hourly'}
 KEEPDAYS=${3:-'1'}
 
-# update timestamp, fails if subvolume is ""
-touch ${SUBVOLUME}
-sync
-btrfs subvolume snapshot -r "${SUBVOLUME}" "${SUBVOLUME}.snapshots/$(date +%F-%H-%M-%S)-${CRONTYPE}"
-
-[ ${KEEPDAYS} -gt 0 ] \
-  && find "${SUBVOLUME}.snapshots/" -maxdepth 1 -type d -name "*-${CRONTYPE}" -ctime ${KEEPDAYS} -exec btrfs subvolume delete '{}' \; \
-  || echo "Cleanup disabled for ${CRONTYPE}"
+${SCRIPT_PATH}/snapshot-create ${SUBVOLUME} ${CRONTYPE} ${KEEPDAYS}
+${SCRIPT_PATH}/snapshot-cleanup ${SUBVOLUME} ${CRONTYPE} ${KEEPDAYS}
