@@ -24,14 +24,15 @@ SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 #################################################
 # setup logs
 LOGFILE="${SCRIPT_PATH}/cron.log"
+LOGPREFIX="${CRONNAME} %H:%M:%S"
 
 # this saves everything to logfile and prints stderr to screen. that way cron sends an email only if something failed.
 # ref https://stackoverflow.com/a/19279694
 if [ -n "${DEBUG}" ] || [ -n "${VERBOSE}" ]; then
-  exec > >(ts "${CRONNAME} %H:%M:%S" | tee -a ${LOGFILE}) 2> >(ts "${CRONNAME} %H:%M:%S" | tee -a ${LOGFILE} >&2)
+  exec > >(ts "${LOGPREFIX}" | tee -a ${LOGFILE}) 2> >(ts "${LOGPREFIX}" | tee -a ${LOGFILE} >&2)
 else
   exec 3>&2
-  exec > >(ts "${CRONNAME} %H:%M:%S" | tee -a ${LOGFILE} >/dev/null) 2> >(ts "${CRONNAME} %H:%M:%S" | tee -a ${LOGFILE} >&3)
+  exec > >(ts "${LOGPREFIX}" | tee -a ${LOGFILE} >/dev/null) 2> >(ts "${LOGPREFIX}" | tee -a ${LOGFILE} >&3)
 fi
 
 
