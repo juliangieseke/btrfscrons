@@ -27,6 +27,5 @@ echo
 echo
 echo ==============================================
 echo
-echo Cron logs
-cat ${SCRIPT_PATH}/cron.log
-echo "" > ${SCRIPT_PATH}/cron.log
+echo Latest Cron Logs
+tail -n 100 ${SCRIPT_PATH}/cron.log
