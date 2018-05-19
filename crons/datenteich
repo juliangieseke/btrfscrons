@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
 
-set -e
-
-DEBUG=${DEBUG:-''}
-[ -n "${DEBUG}" ] && set -x
-
-# print header
-echo 
-echo ==============================================
-echo Start
-
 # sets $CRONTYPE
 source ${SCRIPT_PATH}/inc/crontype /mnt/volume/datenteich
 # sets $KEEPDAYS
@@ -27,6 +17,4 @@ then
 fi
 
 # print footer
-echo Success
-echo ==============================================
-echo
+echo Done.
