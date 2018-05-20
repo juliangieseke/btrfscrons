@@ -14,7 +14,7 @@ KEEPDAYS=${3:-'1'}
 
 if [ ${KEEPDAYS} -gt 0 ]
 then
-  find "${SUBVOLUME}.snapshots/" -maxdepth 1 -type d -name "*-${CRONTYPE}" -ctime ${KEEPDAYS} -exec ${SCRIPT_PATH}/snapshot-delete '{}' \;
+  find "${SUBVOLUME%/}.snapshots/" -maxdepth 1 -type d -name "*${CRONTYPE}*" -ctime ${KEEPDAYS} -exec ${SCRIPT_PATH}/snapshot-delete '{}' \;
 else
-  echo "Cleanup disabled for ${CRONTYPE}"
+  echo "🚨 Cleanup disabled for ${CRONTYPE}"
 fi

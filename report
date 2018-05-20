@@ -15,17 +15,19 @@ echo
 cat /var/run/motd.dynamic
 echo ==============================================
 echo
-echo Disk usage
-df -hl
+echo Disk Info
+hddtemp -w /dev/sd?
+df -hl | grep /$
+df -hl | grep /mnt/disk
 echo
 echo
 echo ==============================================
 echo
 echo Mounts "(Count: $(mount | grep /mnt | wc -l))"
-mount | grep /mnt
+mount | grep /mnt | cut -d \( -f1
 echo
 echo
 echo ==============================================
 echo
 echo Latest Cron Logs
-tail -n 100 ${SCRIPT_PATH}/cron.log
+tail -n 100 /mnt/cron.log

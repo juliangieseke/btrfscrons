@@ -10,5 +10,5 @@ SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 SNAPSHOT=${1:-''}
 
-echo "Delete snapshot $(basename ${SNAPSHOT})"
+echo "🗑 Delete snapshot $(basename ${SNAPSHOT})"
 btrfs subvolume delete ${SNAPSHOT} > /dev/null

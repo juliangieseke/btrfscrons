@@ -2,37 +2,33 @@
 
 if [ -n "${CRONTYPE}" ]
 then
-  echo "Manually set \$CRONTYPE to ${CRONTYPE}"
+  echo "📝 Manually set \$CRONTYPE to '${CRONTYPE}'"
   return
 fi
 
 CRONTYPE='hourly'
 
-if  [ $(date +%H) -lt 2 ] || [ $(date +%H) -gt 5 ]
-then
-  return
-fi
-
 # only allow type daily if cron runs at nighttime
-if [ $(find "${1}.snapshots/" -maxdepth 1 -type d -name "*-daily" -cmin -1380 | wc -l) -eq 0 ]
+# last daily snapshot should be older then 10 hours to prevent multiple runs per night
+if [ $(find "${SRC%/}.snapshots/" -maxdepth 1 -type d -name "*-daily" -cmin -1080 | wc -l) -eq 0 ]
 then
   CRONTYPE='daily'
 fi
 
 # only allow type weekly if cron runs at nighttime
-if [ $(find "${1}.snapshots/" -maxdepth 1 -type d -name "*-weekly" -ctime -7 | wc -l) -eq 0 ]
+if [ $(find "${SRC%/}.snapshots/" -maxdepth 1 -type d -name "*-weekly" -ctime -7 | wc -l) -eq 0 ]
 then
   CRONTYPE='weekly'
 fi
 
 # only allow type monthly if cron runs at nighttime
-if [ $(find "${1}.snapshots/" -maxdepth 1 -type d -name "*-monthly" -ctime -28 | wc -l) -eq 0 ]
+if [ $(find "${SRC%/}.snapshots/" -maxdepth 1 -type d -name "*-monthly" -ctime -28 | wc -l) -eq 0 ]
 then
   CRONTYPE='monthly'
 fi
 
-if [[ "${CRONTYPE}" != 'hourly' && ( $(date +%H) -lt 2 || $(date +%H) -gt 5 ) ]]
+if [[ "${CRONTYPE}" != 'hourly' && $(date +%H) -gt 5 ]]
 then
-  echo "Deferring ${CRONTYPE} until tonight."
+  echo "🚨 Deferring type '${CRONTYPE}' until tonight."
   CRONTYPE='hourly'
 fi

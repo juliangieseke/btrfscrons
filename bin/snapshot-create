@@ -12,11 +12,13 @@ SUBVOLUME=${1:-''}
 CRONTYPE=${2:-'hourly'}
 KEEPDAYS=${3:-'1'}
 
-SNAPSHOTNAME="$(date +%F-%H-%M-%S)-${CRONTYPE}"
+SNAPSHOTNAME="$(date '+%F-%H-%M-%S')-${CRONTYPE}"
+# [ -d "${SUBVOLUME}.snapshots/${SNAPSHOTNAME}" ] && SNAPSHOTNAME="$(date '+%F %H-%M') ${CRONTYPE}"
+# [ -d "${SUBVOLUME}.snapshots/${SNAPSHOTNAME}" ] && SNAPSHOTNAME="$(date '+%F %H-%M-%S') ${CRONTYPE}"
+[ -d "${SUBVOLUME%/}.snapshots/${SNAPSHOTNAME}" ] && ( echo "ERROR: '${SNAPSHOTNAME}' already exists." 1>&2; exit 1 )
 
 # update timestamp, fails if subvolume is ""
 touch ${SUBVOLUME}
-sync
 
-echo "Create ${CRONTYPE} snapshot"
-btrfs subvolume snapshot -r "${SUBVOLUME}" "${SUBVOLUME}.snapshots/${SNAPSHOTNAME}" > /dev/null
+echo "📸 Create snapshot '${SNAPSHOTNAME}'"
+btrfs subvolume snapshot -r "${SUBVOLUME}" "${SUBVOLUME%/}.snapshots/${SNAPSHOTNAME}" > /dev/null

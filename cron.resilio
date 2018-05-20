@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+#config
+CRONNAME='resilio'
+SRC='/mnt/disk/red/resilio/'
+DST_LOCAL='/mnt/disk/archive/backups/resilio/'
+
+# gets $CRONNAME
+source ${SCRIPT_PATH}/inc/header
+
+# gets $CRONNAME
+# sets $CRONTYPE
+source ${SCRIPT_PATH}/inc/crontype
+
+# gets $CRONTYPE
+# sets $KEEPDAYS
+source ${SCRIPT_PATH}/inc/keepdays
+
+
+# create snapshot
+${SCRIPT_PATH}/bin/snapshot ${SRC} ${CRONTYPE} ${KEEPDAYS}
+
+
+if [ ${CRONTYPE} != 'hourly' ]
+then
+  # run local backup
+  ${SCRIPT_PATH}/bin/backup ${SRC} ${DST_LOCAL}
+fi
+
+# print stats
+source ${SCRIPT_PATH}/inc/footer

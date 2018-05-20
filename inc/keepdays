@@ -4,11 +4,11 @@ KEEPDAYS=${KEEPDAYS:-0}
 
 if [ ${KEEPDAYS} -ne 0 ]
 then
-  echo "Manually set \$KEEPDAYS to ${KEEPDAYS}"
+  echo "📝 Manually set \$KEEPDAYS to '${KEEPDAYS}'"
   return
 fi
 
-case ${1} in
+case ${CRONTYPE} in
   hourly)
     KEEPDAYS=1
     ;;

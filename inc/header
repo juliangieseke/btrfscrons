@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+
+[ -z "${CRONNAME}" ] && ( echo "ERROR: No \$CRONNAME given." 1>&2; exit 1 )
+
+#################################################
+# setup output & traps
+LOGPREFIX="${CRONNAME} %T"
+LOGFILE="/mnt/cron.log"
+
+# ref https://stackoverflow.com/a/19279694
+exec > >(ts "${LOGPREFIX}" | tee -a ${LOGFILE}) 2> >(ts "${LOGPREFIX} ❌" | tee -a ${LOGFILE} >&2)
+
+lockfile -60 -r50  "/mnt/cron.${CRONNAME}.lock"
+function trap_cleanup {
+  rm -f "/mnt/cron.${CRONNAME}.lock"
+}
+trap "trap_cleanup" EXIT INT ERR HUP QUIT ABRT
+
+echo "🚦 Starting ($(date))"
