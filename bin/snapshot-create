@@ -5,20 +5,15 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
-
-SUBVOLUME=${1:-''}
-CRONTYPE=${2:-'hourly'}
-KEEPDAYS=${3:-'1'}
+SRC=${1:-''}
+DST_SNAP=${2:-''}
+CRONTYPE=${3:-'hourly'}
 
 SNAPSHOTNAME="$(date '+%F-%H-%M-%S')-${CRONTYPE}"
-# [ -d "${SUBVOLUME}.snapshots/${SNAPSHOTNAME}" ] && SNAPSHOTNAME="$(date '+%F %H-%M') ${CRONTYPE}"
-# [ -d "${SUBVOLUME}.snapshots/${SNAPSHOTNAME}" ] && SNAPSHOTNAME="$(date '+%F %H-%M-%S') ${CRONTYPE}"
-[ -d "${SUBVOLUME%/}.snapshots/${SNAPSHOTNAME}" ] && ( echo "ERROR: '${SNAPSHOTNAME}' already exists." 1>&2; exit 1 )
+[ -d "${DST_SNAP%/}/${SNAPSHOTNAME}" ] && ( echo "ERROR: '${SNAPSHOTNAME}' already exists." 1>&2; exit 1 )
 
-# update timestamp, fails if subvolume is ""
-touch ${SUBVOLUME}
+# update timestamp, fails if SRC is ""
+touch ${SRC}
 
 echo "📸 Create snapshot '${SNAPSHOTNAME}'"
-btrfs subvolume snapshot -r "${SUBVOLUME}" "${SUBVOLUME%/}.snapshots/${SNAPSHOTNAME}" > /dev/null
+btrfs subvolume snapshot -r "${SRC}" "${DST_SNAP%/}/${SNAPSHOTNAME}" > /dev/null

@@ -11,9 +11,8 @@ SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 #config
 CRONNAME='datenteich'
 SRC='/mnt/disk/red/datenteich/'
-#DST_SNAP='/mnt/disk/red/datenteich.snapshots/'
-DST_LOCAL='/mnt/disk/archive/backups/datenteich/'
-#DST_SEND='/mnt/disk/archive/datenteich.snapshots/'
+DST_SNAP='/mnt/disk/red/datenteich.snapshots/'
+DST_SEND='/mnt/disk/archive/datenteich.snapshots/'
 DST_REMOTE='datenteich@192.168.152.11:/mnt/disk/green/datenteich/'
 DST_REMOTE_BACKUPDIR='/mnt/disk/green/datenteich.backups/'
 
@@ -30,17 +29,19 @@ source ${SCRIPT_PATH}/inc/keepdays
 
 
 # create snapshot
-${SCRIPT_PATH}/bin/snapshot ${SRC} ${CRONTYPE} ${KEEPDAYS}
+${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${CRONTYPE}
+
+# cleanup snapshots
+${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${CRONTYPE} ${KEEPDAYS}
 
 
 if [ ${CRONTYPE} != 'hourly' ]
 then
   # run local backup
-  ${SCRIPT_PATH}/bin/backup ${SRC} ${DST_LOCAL}
-  #${SCRIPT_PATH}/bin/sendrecv ${SRC} ${DST_SEND}
-
+  ${SCRIPT_PATH}/bin/sendrecv ${DST_SNAP} ${DST_SEND} ${CRONTYPE}
+  
   # run remote backup
-  ${SCRIPT_PATH}/bin/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR}
+  # ${SCRIPT_PATH}/bin/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR}
 fi
 
 # print stats

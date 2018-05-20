@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+DST_SNAP=${1:-''}
+DST_SEND=${2:-''}
+
+PARENT=''
+
+# first sync (new) snapshots to DST_SEND
+find ${DST_SNAP%/}/ -mindepth 1 -maxdepth 1 -type d | while read SNAPSHOT
+do
+  SNAPSHOT="$(basename ${SNAPSHOT})"
+  if [ ! -d "${DST_SEND%/}/${SNAPSHOT}" ]
+  then
+    if [ -n "${PARENT}" ]
+    then
+      echo "🚚 Sending incremental snapshot '${SNAPSHOT}' with parent '${PARENT}'."
+      btrfs send -q -p "${DST_SNAP%/}/${PARENT}" "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
+        || {
+          echo "ERROR: btrfs receive failed, trying to clean up" 1>&2
+          [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}" \
+            || [ -d ${DST_SEND%/}/${PARENT} ] &&  ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${PARENT}"
+          exit 1
+        }
+
+    else
+      echo "🚚 Sending initial snapshot '${SNAPSHOT}'."
+      btrfs send -q "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
+        || {
+          echo "ERROR: btrfs receive failed, trying to clean up" 1>&2
+          [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+          exit 1
+        }
+    fi
+    echo "🔍 Verifying sent snapshot…"
+    if [ $(diff -r "${DST_SNAP%/}/${SNAPSHOT}" "${DST_SEND%/}/${SNAPSHOT}" | wc -l) -eq 0 ]
+    then
+      echo "ERROR: Sent snapshot differs from source, deleting it…" 1>&2
+      ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+    fi
+  fi
+  PARENT=${SNAPSHOT}
+done
+
+# now delete old snapshots from DST_SEND
+find ${DST_SEND%/}/ -mindepth 1 -maxdepth 1 -type d | while read SNAPSHOT
+do
+  SNAPSHOT="$(basename ${SNAPSHOT})"
+  if [ ! -d "${DST_SNAP%/}/${SNAPSHOT}" ]
+  then
+    ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+  fi
+done
