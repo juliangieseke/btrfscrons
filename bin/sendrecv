@@ -21,28 +21,27 @@ do
   then
     if [ -n "${PARENT}" ]
     then
-      echo "🚚 Sending incremental snapshot '${SNAPSHOT}' with parent '${PARENT}'."
-      btrfs send -q -p "${DST_SNAP%/}/${PARENT}" "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
+      echo "Sending incremental snapshot '${SNAPSHOT}' with parent '${PARENT}'."
+      btrfs send -p "${DST_SNAP%/}/${PARENT}" "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
         || {
-          echo "ERROR: btrfs receive failed, trying to clean up" 1>&2
+          echo "ERROR: btrfs receive failed, trying to clean up"
           [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}" \
             || [ -d ${DST_SEND%/}/${PARENT} ] &&  ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${PARENT}"
           exit 1
         }
-
     else
-      echo "🚚 Sending initial snapshot '${SNAPSHOT}'."
-      btrfs send -q "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
+      echo "Sending initial snapshot '${SNAPSHOT}'."
+      btrfs send "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
         || {
-          echo "ERROR: btrfs receive failed, trying to clean up" 1>&2
+          echo "ERROR: btrfs receive failed, trying to clean up"
           [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
           exit 1
         }
     fi
-    echo "🔍 Verifying sent snapshot…"
-    if [ $(diff -r "${DST_SNAP%/}/${SNAPSHOT}" "${DST_SEND%/}/${SNAPSHOT}" | wc -l) -eq 0 ]
+    echo "Verifying sent snapshot"
+    if [ $(diff -r "${DST_SNAP%/}/${SNAPSHOT}" "${DST_SEND%/}/${SNAPSHOT}" | wc -l) -ne 0 ]
     then
-      echo "ERROR: Sent snapshot differs from source, deleting it…" 1>&2
+      echo "ERROR: Sent snapshot differs from source, deleting it"
       ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
     fi
   fi

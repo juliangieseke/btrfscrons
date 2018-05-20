@@ -13,7 +13,7 @@ DST=${2:-''}
 RSYNCOPTS="${RSYNCOPTS:-""}"
 
 # check if src is btrfs volume, fails and stops the script if not
-/bin/btrfs subvolume show $SRC > /dev/null
+/bin/btrfs subvolume show $SRC
 
-echo "🚚 Backup to $DST"
+echo "Backup to $DST"
 /usr/bin/rsync --archive --delete $RSYNCOPTS "${SRC}" "${DST}"

@@ -16,5 +16,5 @@ if [ ${KEEPDAYS} -gt 0 ]
 then
   find "${DST_SNAP%/}/" -maxdepth 1 -type d -name "*${CRONTYPE}*" -ctime ${KEEPDAYS} -exec ${SCRIPT_PATH}/snapshot-delete '{}' \;
 else
-  echo "🚨 Cleanup disabled for ${CRONTYPE}"
+  echo "Cleanup disabled for ${CRONTYPE}"
 fi

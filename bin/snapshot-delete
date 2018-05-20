@@ -7,5 +7,4 @@ DEBUG=${DEBUG:-''}
 
 SNAPSHOT=${1:-''}
 
-echo "🔥 Delete snapshot $(basename ${SNAPSHOT})"
-btrfs subvolume delete ${SNAPSHOT} > /dev/null
+btrfs subvolume delete ${SNAPSHOT}

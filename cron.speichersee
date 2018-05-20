@@ -10,13 +10,17 @@ SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 #config
 CRONNAME='speichersee'
-SRC='/mnt/disk/red/speichersee/'
-DST_LOCAL='/mnt/disk/green/backups/speichersee/'
-DST_REMOTE='speichersee@192.168.187.11:/mnt/disk/archive/speichersee/'
-DST_REMOTE_BACKUPDIR='/mnt/disk/green/speichersee.backups/'
+SRC='/mnt/data.disk/speichersee/'
+DST_SNAP='/mnt/data.disk/speichersee.snapshots/'
+DST_SEND='/mnt/backups.disk/speichersee.snapshots/'
+DST_REMOTE='speichersee@192.168.187.11:/mnt/backups.disk/speichersee/'
+DST_REMOTE_BACKUPDIR='/mnt/backups.disk/speichersee.backups/'
+VPN_CONF='hhs'
 
-# gets $CRONNAME
-source ${SCRIPT_PATH}/inc/header
+echo "Starting '${CRONNAME}' ($(date))"
+
+lockfile -600 -r18  "/mnt/cron.${CRONNAME}.lock"
+trap "rm -f \"/mnt/cron.${CRONNAME}.lock\"" EXIT
 
 # gets $CRONNAME
 # sets $CRONTYPE
@@ -28,16 +32,33 @@ source ${SCRIPT_PATH}/inc/keepdays
 
 
 # create snapshot
-${SCRIPT_PATH}/bin/snapshot ${SRC} ${CRONTYPE} ${KEEPDAYS}
+${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${CRONTYPE}
+
+# cleanup snapshots
+${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${CRONTYPE} ${KEEPDAYS}
 
 
 if [ ${CRONTYPE} != 'hourly' ]
 then
   # run local backup
-  ${SCRIPT_PATH}/bin/backup ${SRC} ${DST_LOCAL}
+  n=1
+  until [ $n -gt 3 ]
+  do
+    ${SCRIPT_PATH}/bin/sendrecv ${DST_SNAP} ${DST_SEND} ${CRONTYPE} && break
+    n=$[$n+1]
+    echo "Sending failed, trying again (${n}/3)."
+    sleep 5
+  done
 
   # run remote backup
-  ${SCRIPT_PATH}/bin/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR}
+  n=1
+  until [ $n -gt 3 ]
+  do
+    ${SCRIPT_PATH}/bin/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF} && break
+    n=$[$n+1]
+    echo "Sending failed, trying again (${n}/3)."
+    sleep 5
+  done
 fi
 
 # print stats

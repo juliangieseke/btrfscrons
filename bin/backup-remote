@@ -11,16 +11,17 @@ SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 SRC=${1:-''}
 DST_REMOTE=${2:-''}
 DST_REMOTE_BACKUPDIR=${3:-''}
+VPN_CONF=${4:-''}
 DST_USER="$(echo "${DST_REMOTE}" | cut -d@ -f1)"
 DST_HOST="$(echo "${DST_REMOTE}" | cut -d@ -f2 | cut -d: -f1)"
 RSYNCOPTS="${RSYNCOPTS:-""}"
 
 [ -n "${DST_REMOTE_BACKUPDIR}" ] && RSYNCOPTS="${RSYNCOPTS} --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F)/"
 
-if [ $(ping -c 1 ${DST_HOST} > /dev/null; echo $?) -ne 0 ]
+if [ -n "${VPN_CONF}" ] && [ $(ping -c 1 ${DST_HOST} > /dev/null; echo $?) -ne 0 ]
 then
-  echo "🚇 Connecting to VPN (Host: ${DST_HOST})"
-  /usr/sbin/vpnc bms > /dev/null
+  echo "Connecting to VPN (Host: ${DST_HOST})"
+  /usr/sbin/vpnc ${VPN_CONF}
 fi
 
 ${SCRIPT_PATH}/backup ${SRC} ${DST_REMOTE}

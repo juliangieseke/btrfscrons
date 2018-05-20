@@ -9,11 +9,14 @@ DEBUG=${DEBUG:-''}
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 #config
-CRONNAME='backups'
-SRC='/mnt/disk/force/rootfs/'
+CRONNAME='datenteich'
+SRC='/mnt/boot.disk/rootfs/'
+DST_SNAP='/mnt/boot.disk/rootfs.snapshots/'
 
-# gets $CRONNAME
-source ${SCRIPT_PATH}/inc/header
+echo "Starting '${CRONNAME}' ($(date))"
+
+lockfile -600 -r18  "/mnt/cron.${CRONNAME}.lock"
+trap "rm -f \"/mnt/cron.${CRONNAME}.lock\"" EXIT
 
 # gets $CRONNAME
 # sets $CRONTYPE
@@ -25,7 +28,10 @@ source ${SCRIPT_PATH}/inc/keepdays
 
 
 # create snapshot
-${SCRIPT_PATH}/bin/snapshot ${SRC} ${CRONTYPE} ${KEEPDAYS}
+${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${CRONTYPE}
+
+# cleanup snapshots
+${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${CRONTYPE} ${KEEPDAYS}
 
 
 # print stats
