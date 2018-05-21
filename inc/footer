@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo -n "✅ Finished successfully after "
+echo -n "✅ Successfully completed after "
 
 T=${SECONDS}
 

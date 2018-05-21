@@ -39,9 +39,9 @@ do
         }
     fi
     echo "Verifying sent snapshot"
-    if [ $(diff -r "${DST_SNAP%/}/${SNAPSHOT}" "${DST_SEND%/}/${SNAPSHOT}" | wc -l) -ne 0 ]
+    if [ -z "$(btrfs subvoluem show "${DST_SEND%/}/${SNAPSHOT}" | grep readonly)" ]
     then
-      echo "ERROR: Sent snapshot differs from source, deleting it"
+      echo "ERROR: Sent snapshot is not readonly, deleting it"
       ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
     fi
   fi

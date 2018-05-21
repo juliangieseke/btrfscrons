@@ -19,8 +19,8 @@ VPN_CONF='hhs'
 
 echo "Starting '${CRONNAME}' ($(date))"
 
-lockfile -600 -r18  "/mnt/cron.${CRONNAME}.lock"
-trap "rm -f \"/mnt/cron.${CRONNAME}.lock\"" EXIT
+lockfile -600 -r18  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
+trap "rm -f \"${SCRIPT_PATH}/bkp.${CRONNAME}.lock\"" EXIT
 
 # gets $CRONNAME
 # sets $CRONTYPE
@@ -45,8 +45,8 @@ then
   until [ $n -gt 3 ]
   do
     ${SCRIPT_PATH}/bin/sendrecv ${DST_SNAP} ${DST_SEND} ${CRONTYPE} && break
-    n=$[$n+1]
     echo "Sending failed, trying again (${n}/3)."
+    n=$[$n+1]
     sleep 5
   done
 
@@ -55,8 +55,8 @@ then
   until [ $n -gt 3 ]
   do
     ${SCRIPT_PATH}/bin/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF} && break
-    n=$[$n+1]
     echo "Sending failed, trying again (${n}/3)."
+    n=$[$n+1]
     sleep 5
   done
 fi

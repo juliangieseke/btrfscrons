@@ -9,15 +9,14 @@ DEBUG=${DEBUG:-''}
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 #config
-CRONNAME='datenteich'
+CRONNAME='resilio'
 SRC='/mnt/data.disk/resilio/'
 DST_SNAP='/mnt/data.disk/resilio.snapshots/'
-DST_SEND='/mnt/backups.disk/resilio.snapshots/'
 
 echo "Starting '${CRONNAME}' ($(date))"
 
-lockfile -600 -r18  "/mnt/cron.${CRONNAME}.lock"
-trap "rm -f \"/mnt/cron.${CRONNAME}.lock\"" EXIT
+lockfile -600 -r18  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
+trap "rm -f \"${SCRIPT_PATH}/bkp.${CRONNAME}.lock\"" EXIT
 
 # gets $CRONNAME
 # sets $CRONTYPE
@@ -34,19 +33,6 @@ ${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${CRONTYPE}
 # cleanup snapshots
 ${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${CRONTYPE} ${KEEPDAYS}
 
-
-if [ ${CRONTYPE} != 'hourly' ]
-then
-  # run local backup
-  n=1
-  until [ $n -gt 3 ]
-  do
-    ${SCRIPT_PATH}/bin/sendrecv ${DST_SNAP} ${DST_SEND} ${CRONTYPE} && break
-    n=$[$n+1]
-    echo "Sending failed, trying again (${n}/3)."
-    sleep 5
-  done
-fi
 
 # print stats
 source ${SCRIPT_PATH}/inc/footer

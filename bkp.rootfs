@@ -9,14 +9,14 @@ DEBUG=${DEBUG:-''}
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 #config
-CRONNAME='datenteich'
+CRONNAME='rootfs'
 SRC='/mnt/boot.disk/rootfs/'
 DST_SNAP='/mnt/boot.disk/rootfs.snapshots/'
 
 echo "Starting '${CRONNAME}' ($(date))"
 
-lockfile -600 -r18  "/mnt/cron.${CRONNAME}.lock"
-trap "rm -f \"/mnt/cron.${CRONNAME}.lock\"" EXIT
+lockfile -600 -r18  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
+trap "rm -f \"${SCRIPT_PATH}/bkp.${CRONNAME}.lock\"" EXIT
 
 # gets $CRONNAME
 # sets $CRONTYPE

@@ -27,7 +27,7 @@ then
   CRONTYPE='monthly'
 fi
 
-if [[ "${CRONTYPE}" != 'hourly' && $(date +%H) -gt 5 ]]
+if [ "${CRONTYPE}" != 'hourly' ] && [ $(date +%H) -gt 5 ]
 then
   echo "Deferring type '${CRONTYPE}' until tonight."
   CRONTYPE='hourly'

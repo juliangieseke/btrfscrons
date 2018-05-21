@@ -18,16 +18,21 @@ echo
 echo Disk Info
 hddtemp -w /dev/sd?
 df -hl | grep /$
-df -hl | grep /mnt/disk
+df -hl | grep disk$
 echo
 echo
 echo ==============================================
 echo
 echo Mounts "(Count: $(mount | grep /mnt | wc -l))"
 mount | grep /mnt | cut -d \( -f1
-echo
-echo
-echo ==============================================
-echo
-echo Latest Cron Logs
-tail -n 100 /mnt/cron.log
+
+find ${SCRIPT_PATH} -maxdepth 1 -type f -name '*.log' | \
+  while read LOGFILE
+  do
+    echo
+    echo
+    echo ==============================================
+    echo
+    echo Last 100 lines of $(basename ${LOGFILE})
+    tail -n 100 ${LOGFILE}
+  done

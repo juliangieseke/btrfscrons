@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+CRONNAME=${1:-''}
+
+[ -z "${CRONNAME}" ] && echo "ERROR: No \$CRONNAME given" && exit 1;
+
+MAILTO="julian.gieseke@gmail.com"
+
+LOGFILE="${SCRIPT_PATH}/bkp.${CRONNAME}.log"
+[ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
+
+OUTPUT="$(${SCRIPT_PATH}/bkp.${CRONNAME} 2>&1 | tee -a ${LOGFILE}; exit ${PIPESTATUS[0]})"
+EXITCODE=$?
+
+[ ${EXITCODE} -ne 0 ] && echo -e "Subject: ❌ (exit ${EXITCODE}) ${CRONNAME}\n\n${OUTPUT}" | ssmtp ${MAILTO}
