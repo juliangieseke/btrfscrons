@@ -18,29 +18,23 @@ DST_REMOTE_BACKUPDIR=${6:-''}
 VPN_CONF=${7:-''}
 
 # run local backup
-EXITCODE=1
+FAILED=1
 ATTEMPT=1
-while [ ${EXITCODE} -ne 0 ] && [ ${ATTEMPT} -le 3 ]
+while [ ${FAILED} -ne 0 ] && [ ${ATTEMPT} -le 3 ]
 do
-  set +e
-  ${SCRIPT_PATH}/sendrecv ${DST_SNAP} ${DST_SEND} ${JOBTYPE}
-  EXITCODE=$?
-  set -e
-  [ ${EXITCODE} -ne 0 ] && echo "sendrecv failed, trying again (${ATTEMPT}/3)." 1>&2
+  ${SCRIPT_PATH}/sendrecv ${DST_SNAP} ${DST_SEND} ${JOBTYPE} && FAILED=0 || FAILED=1
+  [ ${FAILED} -ne 0 ] && echo "sendrecv failed, trying again (${ATTEMPT}/3)." 1>&2
   ATTEMPT=$[ATTEMPT+1]
 done
-[ ${EXITCODE} -ne 0 ] && exit 1
+[ ${FAILED} -ne 0 ] && exit 1
 
 # run remote backup
-EXITCODE=1
+FAILED=1
 ATTEMPT=1
-while [ ${EXITCODE} -ne 0 ] && [ ${ATTEMPT} -le 3 ]
+while [ ${FAILED} -ne 0 ] && [ ${ATTEMPT} -le 3 ]
 do
-  set +e
-  ${SCRIPT_PATH}/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF}
-  EXITCODE=$?  
-  set -e
-  [ ${EXITCODE} -ne 0 ] && echo "backup-remote failed, trying again (${ATTEMPT}/3)." 1>&2
+  ${SCRIPT_PATH}/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF} && FAILED=0 || FAILED=1
+  [ ${FAILED} -ne 0 ] && echo "backup-remote failed, trying again (${ATTEMPT}/3)." 1>&2
   ATTEMPT=$[ATTEMPT+1]
 done
-[ ${EXITCODE} -ne 0 ] && exit 1
+[ ${FAILED} -ne 0 ] && exit 1
