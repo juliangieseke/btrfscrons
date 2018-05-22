@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+#logfiles
+find ${SCRIPT_PATH} -maxdepth 1 -type f -name '*.log' | \
+  while read LOGFILE
+  do
+    echo Last line of $(basename ${LOGFILE})
+    tail -n 1 ${LOGFILE}
+    echo;
+  done
+
+#logfiles
+find ${SCRIPT_PATH} -maxdepth 1 -type f -name '*.log' | \
+  while read LOGFILE
+  do
+    echo
+    echo
+    echo ==============================================
+    echo
+    echo Last 100 lines of $(basename ${LOGFILE})
+    tail -n 100 ${LOGFILE}
+  done
