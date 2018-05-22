@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+trap 'trap - SIGTERM && kill 0' SIGINT SIGTERM
 
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
@@ -13,10 +14,10 @@ CRONNAME='rootfs'
 SRC='/mnt/boot.disk/rootfs/'
 DST_SNAP='/mnt/boot.disk/rootfs.snapshots/'
 
-echo "Starting '${CRONNAME}' ($(date))"
 
-lockfile -600 -r18  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
-trap "rm -f \"${SCRIPT_PATH}/bkp.${CRONNAME}.lock\"" EXIT
+lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
+trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"; trap - EXIT' EXIT SIGINT
+echo -e "\n🚛 Starting '${CRONNAME}' ($(date))"
 
 # gets $CRONNAME
 # sets $CRONTYPE

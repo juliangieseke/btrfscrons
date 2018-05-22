@@ -24,7 +24,7 @@ do
       echo "Sending incremental snapshot '${SNAPSHOT}' with parent '${PARENT}'."
       btrfs send -p "${DST_SNAP%/}/${PARENT}" "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
         || {
-          echo "ERROR: btrfs receive failed, trying to clean up"
+          echo "ERROR: btrfs receive failed, trying to clean up" 1>&2
           [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}" \
             || [ -d ${DST_SEND%/}/${PARENT} ] &&  ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${PARENT}"
           exit 1
@@ -39,9 +39,9 @@ do
         }
     fi
     echo "Verifying sent snapshot"
-    if [ -z "$(btrfs subvoluem show "${DST_SEND%/}/${SNAPSHOT}" | grep readonly)" ]
+    if [ -z "$(btrfs subvolume show "${DST_SEND%/}/${SNAPSHOT}" | grep readonly)" ]
     then
-      echo "ERROR: Sent snapshot is not readonly, deleting it"
+      echo "ERROR: Sent snapshot is not readonly, deleting it" 1>&2
       ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
     fi
   fi

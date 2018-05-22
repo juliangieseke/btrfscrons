@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+SRC=${1:-''}
+DST=${2:-''}
+RSYNCOPTS="${RSYNCOPTS:-""}"
+
+# check if src is btrfs volume, fails and stops the script if not
+if [ $(/bin/btrfs subvolume show $SRC > /dev/null; echo $?) -ne 0 ]
+then
+  echo "ERROR: \$SRC is not a btrfs subvolume, is it mounted?" 1>&2
+  exit 1
+fi
+
+echo "Backup to $DST"
+/usr/bin/rsync --archive --delete $RSYNCOPTS "${SRC}" "${DST}"

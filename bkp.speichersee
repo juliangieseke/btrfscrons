@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+trap 'trap - SIGTERM && kill 0' SIGINT SIGTERM
 
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
@@ -17,10 +18,10 @@ DST_REMOTE='speichersee@192.168.187.11:/mnt/backups.disk/speichersee/'
 DST_REMOTE_BACKUPDIR='/mnt/backups.disk/speichersee.backups/'
 VPN_CONF='hhs'
 
-echo "Starting '${CRONNAME}' ($(date))"
 
-lockfile -600 -r18  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
-trap "rm -f \"${SCRIPT_PATH}/bkp.${CRONNAME}.lock\"" EXIT
+lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
+trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"; trap - EXIT' EXIT SIGINT
+echo -e "\n🚛 Starting '${CRONNAME}' ($(date))"
 
 # gets $CRONNAME
 # sets $CRONTYPE
@@ -32,34 +33,13 @@ source ${SCRIPT_PATH}/inc/keepdays
 
 
 # create snapshot
-${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${CRONTYPE}
+${SCRIPT_PATH}/bin/snapshot-create "${SRC}" "${DST_SNAP}" "${CRONTYPE}"
 
 # cleanup snapshots
-${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${CRONTYPE} ${KEEPDAYS}
+${SCRIPT_PATH}/bin/snapshot-cleanup "${DST_SNAP}" "${CRONTYPE}" "${KEEPDAYS}"
 
-
-if [ ${CRONTYPE} != 'hourly' ]
-then
-  # run local backup
-  n=1
-  until [ $n -gt 3 ]
-  do
-    ${SCRIPT_PATH}/bin/sendrecv ${DST_SNAP} ${DST_SEND} ${CRONTYPE} && break
-    echo "Sending failed, trying again (${n}/3)."
-    n=$[$n+1]
-    sleep 5
-  done
-
-  # run remote backup
-  n=1
-  until [ $n -gt 3 ]
-  do
-    ${SCRIPT_PATH}/bin/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF} && break
-    echo "Sending failed, trying again (${n}/3)."
-    n=$[$n+1]
-    sleep 5
-  done
-fi
+# run backups, if not hourly
+[ ${CRONTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/backup ${CRONTYPE} ${SRC} ${DST_SNAP} ${DST_SEND} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF}
 
 # print stats
 source ${SCRIPT_PATH}/inc/footer

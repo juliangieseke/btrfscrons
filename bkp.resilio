@@ -13,10 +13,10 @@ CRONNAME='resilio'
 SRC='/mnt/data.disk/resilio/'
 DST_SNAP='/mnt/data.disk/resilio.snapshots/'
 
-echo "Starting '${CRONNAME}' ($(date))"
 
-lockfile -600 -r18  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
-trap "rm -f \"${SCRIPT_PATH}/bkp.${CRONNAME}.lock\"" EXIT
+lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
+trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"; trap - EXIT' EXIT SIGINT
+echo -e "\n🚛 Starting '${CRONNAME}' ($(date))"
 
 # gets $CRONNAME
 # sets $CRONTYPE

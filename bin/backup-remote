@@ -20,11 +20,11 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 
 if [ -n "${VPN_CONF}" ] && [ $(ping -c 1 ${DST_HOST} > /dev/null; echo $?) -ne 0 ]
 then
-  echo "Connecting to VPN (Host: ${DST_HOST})"
+  echo "Cannot ping Host, connecting to VPN (Host: ${DST_HOST})" 1>&2
   /usr/sbin/vpnc ${VPN_CONF}
 fi
 
-${SCRIPT_PATH}/backup ${SRC} ${DST_REMOTE}
+${SCRIPT_PATH}/backup-rsync ${SRC} ${DST_REMOTE}
 
 # remove locally deleted files on remote after 90 days
 [ -n "${DST_REMOTE_BACKUPDIR}" ] && ssh ${DST_USER}@${DST_HOST} find ${DST_REMOTE_BACKUPDIR} -maxdepth 1 -type d -name "??-??-??" -ctime 90 -exec "rm -rf '{}' \;"

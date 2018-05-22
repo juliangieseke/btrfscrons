@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -e
+trap 'trap - SIGTERM && kill 0' SIGINT SIGTERM
 
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x

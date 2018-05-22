@@ -15,17 +15,22 @@ echo
 cat /var/run/motd.dynamic
 echo ==============================================
 echo
-echo Disk Info
+echo Disk Temp
 hddtemp -w /dev/sd?
-df -hl | grep /$
-df -hl | grep disk$
 echo
+echo Disk Free
+[ $(btrfs filesystem show / > /dev/null 2>&1;echo $?) -eq 0 ] && btrfs filesystem df /mnt/boot.disk/ || df -hl /
+btrfs filesystem df /mnt/data.disk/
+btrfs filesystem df /mnt/backups.disk/
 echo
-echo ==============================================
+echo Disk Usage
+btrfs filesystem du -s /mnt/*
 echo
 echo Mounts "(Count: $(mount | grep /mnt | wc -l))"
+find /mnt -maxdepth 1 -mindepth 1 -type d -exec btrfs fi show '{}' >/dev/null ';'
 mount | grep /mnt | cut -d \( -f1
 
+#logfiles
 find ${SCRIPT_PATH} -maxdepth 1 -type f -name '*.log' | \
   while read LOGFILE
   do

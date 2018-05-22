@@ -1,7 +1,3 @@
-================== send verbose
+OK to stdout
 ERROR to stderr
-ERROR to stderr
-ERROR to stderr
-ERROR to stderr
-ERROR to stderr
-ERROR to stderr
+❌ Stopped with errors.
