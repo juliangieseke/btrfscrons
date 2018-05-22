@@ -1,3 +1,3 @@
 Call from crontab:
 
-7 */3 * * * /mnt/.cron/send resilio
+7 */3 * * * /mnt/.bkp/send resilio

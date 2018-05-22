@@ -8,9 +8,9 @@ DEBUG=${DEBUG:-''}
 # set SCRIPT_PATH
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
-CRONNAME='debug.error'
-echo "" > "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
-trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"; trap - EXIT' EXIT SIGINT
+JOBNAME='debug.error'
+echo "" > "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"
+trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"; trap - EXIT' EXIT SIGINT
 
 echo "OK to stdout"
 echo "ERROR to stderr" 1>&2; 

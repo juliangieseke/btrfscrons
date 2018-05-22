@@ -8,7 +8,7 @@ then
   return
 fi
 
-case ${CRONTYPE} in
+case ${JOBTYPE} in
   hourly)
     KEEPDAYS=1
     ;;

@@ -10,29 +10,29 @@ DEBUG=${DEBUG:-''}
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 #config
-CRONNAME='rootfs'
+JOBNAME='rootfs'
 SRC='/mnt/boot.disk/rootfs/'
 DST_SNAP='/mnt/boot.disk/rootfs.snapshots/'
 
 
-lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"
-trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${CRONNAME}.lock"; trap - EXIT' EXIT SIGINT
-echo -e "\n🚛 Starting '${CRONNAME}' ($(date))"
+lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"
+trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"; trap - EXIT' EXIT SIGINT
+echo -e "\n🚛 Starting '${JOBNAME}' ($(date))"
 
-# gets $CRONNAME
-# sets $CRONTYPE
-source ${SCRIPT_PATH}/inc/crontype
+# gets $JOBNAME
+# sets $JOBTYPE
+source ${SCRIPT_PATH}/inc/jobtype
 
-# gets $CRONTYPE
+# gets $JOBTYPE
 # sets $KEEPDAYS
 source ${SCRIPT_PATH}/inc/keepdays
 
 
 # create snapshot
-${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${CRONTYPE}
+${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${JOBTYPE}
 
 # cleanup snapshots
-${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${CRONTYPE} ${KEEPDAYS}
+${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${JOBTYPE} ${KEEPDAYS}
 
 
 # print stats

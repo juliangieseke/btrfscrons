@@ -9,7 +9,7 @@ DEBUG=${DEBUG:-''}
 # set SCRIPT_PATH
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
-CRONTYPE=${1:-''}
+JOBTYPE=${1:-''}
 SRC=${2:-''}
 DST_SNAP=${3:-''}
 DST_SEND=${4:-''}
@@ -23,7 +23,7 @@ ATTEMPT=1
 while [ ${EXITCODE} -ne 0 ] && [ ${ATTEMPT} -le 3 ]
 do
   set +e
-  ${SCRIPT_PATH}/sendrecv ${DST_SNAP} ${DST_SEND} ${CRONTYPE}
+  ${SCRIPT_PATH}/sendrecv ${DST_SNAP} ${DST_SEND} ${JOBTYPE}
   EXITCODE=$?
   set -e
   [ ${EXITCODE} -ne 0 ] && echo "sendrecv failed, trying again (${ATTEMPT}/3)." 1>&2
