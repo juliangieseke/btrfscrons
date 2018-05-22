@@ -8,20 +8,20 @@ fi
 
 JOBTYPE='hourly'
 
-# only allow type daily if cron runs at nighttime
+# only allow type daily if job runs at nighttime
 # last daily snapshot should be older then 10 hours to prevent multiple runs per night
 if [ $(find "${DST_SNAP%/}/" -maxdepth 1 -type d -name "*-daily" -cmin -1080 | wc -l) -eq 0 ]
 then
   JOBTYPE='daily'
 fi
 
-# only allow type weekly if cron runs at nighttime
+# only allow type weekly if job runs at nighttime
 if [ $(find "${DST_SNAP%/}/" -maxdepth 1 -type d -name "*-weekly" -ctime -7 | wc -l) -eq 0 ]
 then
   JOBTYPE='weekly'
 fi
 
-# only allow type monthly if cron runs at nighttime
+# only allow type monthly if job runs at nighttime
 if [ $(find "${DST_SNAP%/}/" -maxdepth 1 -type d -name "*-monthly" -ctime -28 | wc -l) -eq 0 ]
 then
   JOBTYPE='monthly'

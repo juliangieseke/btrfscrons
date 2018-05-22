@@ -20,6 +20,7 @@ source ${SCRIPT_PATH}/inc/jobtype
 # sets $KEEPDAYS
 source ${SCRIPT_PATH}/inc/keepdays
 
+#################################################
 
 # create snapshot
 ${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${JOBTYPE}
@@ -30,6 +31,6 @@ ${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${JOBTYPE} ${KEEPDAYS}
 # run backups, if not hourly
 [ ${JOBTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/retry-local ${JOBTYPE} ${SRC} ${DST_SNAP} ${DST_SEND}
 
+#################################################
 
-# print stats
-source ${SCRIPT_PATH}/inc/footer
+echo "✅ Successfully completed after $(displaytime ${SECONDS})."

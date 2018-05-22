@@ -7,4 +7,25 @@ DEBUG=${DEBUG:-''}
 
 lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"
 trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"; trap - EXIT' EXIT SIGINT
-echo -e "\n🚛 Starting '${JOBNAME}' ($(date))"
+echo -e "\n🚛 Starting at $(date)"
+
+
+function displaytime {
+
+  T=${1}
+
+  D=$((T/60/60/24))
+  H=$((T/60/60%24))
+  M=$((T/60%60))
+  S=$((T%60))
+
+  [[ $D > 1 ]] && printf '%d days ' $D
+  [[ $D == 1 ]] && printf '%d day ' $D
+  [[ $H > 1 ]] && printf '%d hours ' $H
+  [[ $H == 1 ]] && printf '%d hour ' $H
+  [[ $M > 1 ]] && printf '%d minutes ' $M
+  [[ $M == 1 ]] && printf '%d minute ' $M
+  [[ $D > 0 || $H > 0 || $M > 0 ]] && printf 'and '
+  [[ $S > 1 || $S == 0 ]] && printf '%d seconds' $S || printf '%d second' $S
+
+}
