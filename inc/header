@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"
+trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"; trap - EXIT' EXIT SIGINT
+echo -e "\n🚛 Starting '${JOBNAME}' ($(date))"

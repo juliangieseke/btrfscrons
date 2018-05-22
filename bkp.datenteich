@@ -1,26 +1,19 @@
 #!/usr/bin/env bash
 
-set -e
-
-DEBUG=${DEBUG:-''}
-[ -n "${DEBUG}" ] && set -x
-
 # set SCRIPT_PATH
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
-#config
+# lockfile and traps
 JOBNAME='datenteich'
+source ${SCRIPT_PATH}/inc/header
+
+#config
 SRC='/mnt/data.disk/datenteich/'
 DST_SNAP='/mnt/data.disk/datenteich.snapshots/'
 DST_SEND='/mnt/backups.disk/datenteich.snapshots/'
 DST_REMOTE='datenteich@192.168.152.11:/mnt/backups.disk/datenteich/'
 DST_REMOTE_BACKUPDIR='/mnt/backups.disk/datenteich.backups/'
 VPN_CONF='bms'
-
-
-lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"
-trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"; trap - EXIT' EXIT SIGINT
-echo -e "\n🚛 Starting '${JOBNAME}' ($(date))"
 
 # gets $JOBNAME
 # sets $JOBTYPE
@@ -30,7 +23,6 @@ source ${SCRIPT_PATH}/inc/jobtype
 # sets $KEEPDAYS
 source ${SCRIPT_PATH}/inc/keepdays
 
-
 # create snapshot
 ${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${JOBTYPE}
 
@@ -38,7 +30,8 @@ ${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${JOBTYPE}
 ${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${JOBTYPE} ${KEEPDAYS}
 
 # run backups, if not hourly
-[ ${JOBTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/backup ${JOBTYPE} ${SRC} ${DST_SNAP} ${DST_SEND} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF}
+[ ${JOBTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/retry-local ${JOBTYPE} ${SRC} ${DST_SNAP} ${DST_SEND}
+[ ${JOBTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/retry-remote ${JOBTYPE} ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF}
 
 
 # print stats

@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+set -e
+trap 'exit 1' SIGINT
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+JOBTYPE=${1:-''}
+SRC=${2:-''}
+DST_REMOTE=${3:-''}
+DST_REMOTE_BACKUPDIR=${4:-''}
+VPN_CONF=${5:-''}
+
+# run remote backup
+RETURN=1
+ATTEMPT=1
+while [ ${RETURN} -ne 0 ] && [ ${ATTEMPT} -le 3 ]
+do
+  ${SCRIPT_PATH}/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF} && RETURN=0 || RETURN=$?
+  [ ${RETURN} -ne 0 ] && echo "backup-remote failed, trying again in 30s (${ATTEMPT}/3)." 1>&2 && sleep 30
+  ATTEMPT=$[ATTEMPT+1]
+done
+
+exit $RETURN

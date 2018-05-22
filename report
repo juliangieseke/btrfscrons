@@ -18,13 +18,18 @@ echo
 echo Disk Temp
 hddtemp -w /dev/sd?
 echo
-echo Disk Free
+echo Disk Stats
+echo "/"
 [ $(btrfs filesystem show / > /dev/null 2>&1;echo $?) -eq 0 ] && btrfs filesystem df /mnt/boot.disk/ || df -hl /
-btrfs filesystem df /mnt/data.disk/
-btrfs filesystem df /mnt/backups.disk/
+[ $(btrfs filesystem show / > /dev/null 2>&1;echo $?) -eq 0 ] && btrfs filesystem du -s /mnt/boot.disk/ || du -sh /
 echo
-echo Disk Usage
-btrfs filesystem du -s /mnt/*
+echo "data.disk"
+btrfs filesystem df /mnt/data.disk/
+btrfs filesystem du -s /mnt/data.disk/
+echo
+echo "backups.disk"
+btrfs filesystem df /mnt/backups.disk/
+btrfs filesystem du -s /mnt/backups.disk/
 echo
 echo Mounts "(Count: $(mount | grep /mnt | wc -l))"
 find /mnt -maxdepth 1 -mindepth 1 -type d -exec btrfs fi show '{}' >/dev/null ';'

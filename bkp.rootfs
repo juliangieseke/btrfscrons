@@ -1,23 +1,16 @@
 #!/usr/bin/env bash
 
-set -e
-trap 'trap - SIGTERM && kill 0' SIGINT SIGTERM
-
-DEBUG=${DEBUG:-''}
-[ -n "${DEBUG}" ] && set -x
-
 # set SCRIPT_PATH
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
-#config
+# lockfile and traps
 JOBNAME='rootfs'
+source ${SCRIPT_PATH}/inc/header
+
+#config
 SRC='/mnt/boot.disk/rootfs/'
 DST_SNAP='/mnt/boot.disk/rootfs.snapshots/'
-
-
-lockfile -600 -r5  "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"
-trap '[ $? -ne 0 ] && echo "❌ Stopped with errors."; rm -f "${SCRIPT_PATH}/bkp.${JOBNAME}.lock"; trap - EXIT' EXIT SIGINT
-echo -e "\n🚛 Starting '${JOBNAME}' ($(date))"
+DST_SEND='/mnt/backups.disk/rootfs.snapshots/'
 
 # gets $JOBNAME
 # sets $JOBTYPE
@@ -33,6 +26,9 @@ ${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${JOBTYPE}
 
 # cleanup snapshots
 ${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${JOBTYPE} ${KEEPDAYS}
+
+# run backups, if not hourly
+[ ${JOBTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/retry-local ${JOBTYPE} ${SRC} ${DST_SNAP} ${DST_SEND}
 
 
 # print stats

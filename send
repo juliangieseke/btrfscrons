@@ -8,17 +8,15 @@ DEBUG=${DEBUG:-''}
 # set SCRIPT_PATH
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
-JOBNAME=${1:-''}
-
-[ -z "${JOBNAME}" ] && echo "ERROR: No \$JOBNAME given" && exit 1;
+SUBSCRIPT="${1:-''}"
+LOGFILE="${SUBSCRIPT}.log"
 
 MAILTO="julian.gieseke@gmail.com"
 
-LOGFILE="${SCRIPT_PATH}/bkp.${JOBNAME}.log"
+[ -z "${SUBSCRIPT}" ] && echo "ERROR: No \$SUBSCRIPT given" && exit 1;
+
 [ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
 
-# ${SCRIPT_PATH}/bkp.${JOBNAME} | tee -a ${LOGFILE} 1>/dev/null
-
-${SCRIPT_PATH}/bkp.${JOBNAME} 1>>${LOGFILE} 2>>${LOGFILE} \
-  || echo -e "Subject: ❌ Error on Job '${JOBNAME}'\n\n$(tac ${LOGFILE} | grep -m1 -B500 🚛 | tac)" | ssmtp ${MAILTO} \
-  || tail -n 100 $(tac ${LOGFILE} | grep -m1 -B500 🚛 | tac)
+${SUBSCRIPT} 1>>${LOGFILE} 2>>${LOGFILE} \
+  || echo -e "Subject: ❌ Error on Job '$(basename ${SUBSCRIPT})'\n\n$(tac ${LOGFILE} | grep -m1 -B500 🚛)" | ssmtp ${MAILTO} \
+  || tail -n 100 ${LOGFILE}

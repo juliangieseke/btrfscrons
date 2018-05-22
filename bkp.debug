@@ -1,14 +1,18 @@
 #!/usr/bin/env bash
 
-set -e
-trap 'trap - SIGTERM && kill 0' SIGINT SIGTERM
-
-DEBUG=${DEBUG:-''}
-[ -n "${DEBUG}" ] && set -x
-
 # set SCRIPT_PATH
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
-# echo "ERROR to stderr" 1>&2; exit 1
+# lockfile and traps
+JOBNAME="debug"
+source ${SCRIPT_PATH}/inc/header
 
+#debug stuff 
 echo "OK to stdout"
+echo "ERROR to stderr" 1>&2; 
+
+sleep 3
+
+exit 1
+
+

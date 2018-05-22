@@ -18,7 +18,7 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 
 [ -n "${DST_REMOTE_BACKUPDIR}" ] && RSYNCOPTS="${RSYNCOPTS} --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F-%H-%M-%S)/"
 
-if [ -n "${VPN_CONF}" ] && [ $(ping -c 1 ${DST_HOST} > /dev/null; echo $?) -ne 0 ]
+if [ -n "${VPN_CONF}" ] && [ $(ping -W 5 -c 1 ${DST_HOST} > /dev/null; echo $?) -ne 0 ]
 then
   echo "Cannot ping Host, connecting to VPN (Host: ${DST_HOST})" 1>&2
   /usr/sbin/vpnc ${VPN_CONF}
@@ -30,3 +30,6 @@ ${SCRIPT_PATH}/backup-rsync ${SRC} ${DST_REMOTE}
 [ -n "${DST_REMOTE_BACKUPDIR}" ] \
   && ssh ${DST_USER}@${DST_HOST} \
     find ${DST_REMOTE_BACKUPDIR} -mindepth 1 -maxdepth 1 -type d -ctime 90 -exec "echo Deleting remote backup directory '{}' \;" -exec "rm -rf '{}' \;"
+
+# grep itself is listed in top, that swhy we check for 1
+[ "$(top -cbn1 | grep datenteich@192.168.152.11 | wc -l)" -eq 1 ] && /usr/sbin/vpnc-disconnect
