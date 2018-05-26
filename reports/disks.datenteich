@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
+echo "/"
+echo;
+echo "df:"
+btrfs filesystem df /mnt/boot.disk/
+echo;
+echo "du:"
+btrfs filesystem du -s /mnt/boot.disk/
+echo;
+echo "smart:"
+smartctl -i /dev/nvme0
+smartctl -A /dev/nvme0
+echo;
+echo ==============================================
+echo;
+echo "data.disk"
+echo;
+echo "df:"
+btrfs filesystem df /mnt/data.disk/
+echo;
+echo "du:"
+btrfs filesystem du -s /mnt/data.disk/
+echo;
+echo "smart:"
+smartctl -i /dev/sda
+smartctl -A /dev/sda
+echo;
+echo ==============================================
+echo;
+echo "backups.disk"
+echo;
+echo "df:"
+btrfs filesystem df /mnt/backups.disk/
+echo;
+echo "du:"
+btrfs filesystem du -s /mnt/backups.disk/
+echo;
+echo "smart:"
+smartctl -i /dev/sdb
+smartctl -A /dev/sdb
+echo;
+echo ==============================================
+echo;
+echo Mounts "(Count: $(mount | grep /mnt | wc -l))"
+find /mnt -maxdepth 1 -mindepth 1 -type d -exec btrfs fi show '{}' >/dev/null ';'
+mount | grep /mnt | cut -d \( -f1

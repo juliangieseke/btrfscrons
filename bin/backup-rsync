@@ -20,4 +20,4 @@ then
 fi
 
 echo "Backup to $DST"
-/usr/bin/rsync --archive --delete --itemize-changes $RSYNCOPTS "${SRC}" "${DST}"
+/usr/bin/rsync --archive --delete $RSYNCOPTS "${SRC}" "${DST}"

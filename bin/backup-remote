@@ -16,7 +16,10 @@ DST_USER="$(echo "${DST_REMOTE}" | cut -d@ -f1)"
 DST_HOST="$(echo "${DST_REMOTE}" | cut -d@ -f2 | cut -d: -f1)"
 RSYNCOPTS="${RSYNCOPTS:-""}"
 
-[ -n "${DST_REMOTE_BACKUPDIR}" ] && RSYNCOPTS="${RSYNCOPTS} --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F-%H-%M-%S)/"
+if [ -n "${DST_REMOTE_BACKUPDIR}" ]
+then
+  RSYNCOPTS="${RSYNCOPTS} --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F-%H-%M-%S)/"
+fi
 
 if [ -n "${VPN_CONF}" ] && [ $(ping -W 5 -c 1 ${DST_HOST} > /dev/null; echo $?) -ne 0 ]
 then
@@ -24,7 +27,7 @@ then
   /usr/sbin/vpnc ${VPN_CONF}
 fi
 
-${SCRIPT_PATH}/backup-rsync ${SRC} ${DST_REMOTE}
+RSYNCOPTS="${RSYNCOPTS}" ${SCRIPT_PATH}/backup-rsync ${SRC} ${DST_REMOTE}
 
 # remove locally deleted files on remote after 90 days
 [ -n "${DST_REMOTE_BACKUPDIR}" ] \
@@ -32,4 +35,7 @@ ${SCRIPT_PATH}/backup-rsync ${SRC} ${DST_REMOTE}
     find ${DST_REMOTE_BACKUPDIR} -mindepth 1 -maxdepth 1 -type d -ctime 90 -exec "echo Deleting remote backup directory '{}' \;" -exec "rm -rf '{}' \;"
 
 # grep itself is listed in top, that swhy we check for 1
-[ "$(top -cbn1 | grep datenteich@192.168.152.11 | wc -l)" -eq 1 ] && /usr/sbin/vpnc-disconnect
+if [ "$(top -cbn1 | grep ${DST_USER}@${DST_HOST} | wc -l)" -eq 1 ]
+then
+  /usr/sbin/vpnc-disconnect
+fi

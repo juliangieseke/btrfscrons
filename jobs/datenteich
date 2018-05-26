@@ -35,7 +35,7 @@ ${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${JOBTYPE} ${KEEPDAYS}
 [ ${JOBTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/retry-local ${JOBTYPE} ${SRC} ${DST_SNAP} ${DST_SEND}
 
 # run remote backups, if not hourly
-[ ${JOBTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/retry-remote ${JOBTYPE} ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF}
+[[ -n "${FORCE_REMOTE}" || ${JOBTYPE} != 'hourly' ]] && ${SCRIPT_PATH}/bin/retry-remote ${JOBTYPE} ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF}
 
 #################################################
 

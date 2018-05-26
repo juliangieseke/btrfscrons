@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
 #logfiles
-find ${SCRIPT_PATH} -maxdepth 1 -type f -name '*.log' | \
+find ${SCRIPT_PATH}/log -mindepth 1 -maxdepth 1 -type f | \
   while read LOGFILE
   do
     echo Last line of $(basename ${LOGFILE})
@@ -10,7 +13,7 @@ find ${SCRIPT_PATH} -maxdepth 1 -type f -name '*.log' | \
   done
 
 #logfiles
-find ${SCRIPT_PATH} -maxdepth 1 -type f -name '*.log' | \
+find ${SCRIPT_PATH}/log -mindepth 1 -maxdepth 1 -type f | \
   while read LOGFILE
   do
     echo

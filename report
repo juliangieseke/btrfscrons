@@ -1,10 +1,31 @@
 #!/usr/bin/env bash
 
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+err_report() {
+  echo "errexit on line $(caller)" >&2
+}
+trap err_report ERR
+
+# set SCRIPT_PATH
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+
 MAILTO="julian.gieseke@gmail.com"
 
 
-echo -e "Subject: System Report Speichersee\n\n$(/mnt/.bkp/report-system)" | ssmtp $MAILTO
+echo -e "Subject: System Report $(hostname)\n\n$(${SCRIPT_PATH}/reports/system)" | ssmtp $MAILTO
 
-echo -e "Subject: Log Report Speichersee\n\n$(/mnt/.bkp/report-logs)" | ssmtp $MAILTO
+echo -e "Subject: Log Report $(hostname)\n\n$(${SCRIPT_PATH}/reports/logs)" | ssmtp $MAILTO
 
-echo -e "Subject: Disk Report Speichersee\n\n$(/mnt/.bkp/report-disks)" | ssmtp $MAILTO
+if [ "$(hostname)" == "Datenteich" ]
+then 
+  echo -e "Subject: Disk Report $(hostname)\n\n$(${SCRIPT_PATH}/reports/disks.datenteich)" | ssmtp $MAILTO
+elif [ "$(hostname)" == "Speichersee" ]
+then
+  echo -e "Subject: Disk Report $(hostname)\n\n$(${SCRIPT_PATH}/reports/disks.speichersee)" | ssmtp $MAILTO
+else
+  echo "unknown hostname" 1>&2
+fi

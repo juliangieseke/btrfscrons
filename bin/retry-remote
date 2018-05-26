@@ -18,7 +18,8 @@ VPN_CONF=${5:-''}
 # run remote backup
 RETURN=1
 ATTEMPT=1
-while [ ${RETURN} -ne 0 ] && [ ${ATTEMPT} -le 3 ]
+RETRY=${RETRY:-3}
+while [ ${RETURN} -ne 0 ] && [ ${ATTEMPT} -le ${RETRY} ]
 do
   ${SCRIPT_PATH}/backup-remote ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF} && RETURN=0 || RETURN=$?
   [ ${RETURN} -ne 0 ] && echo "backup-remote failed, trying again in 30s (${ATTEMPT}/3)." 1>&2 && sleep 30
