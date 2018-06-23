@@ -5,31 +5,16 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-err_report() {
-  echo "errexit on line $(caller)" >&2
-}
-trap err_report ERR
-
-# set SCRIPT_PATH
+# set some vars
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
-
 JOBNAME="${1:-''}"
 LOGFILE="${SCRIPT_PATH}/log/cron.$(date +%F).log"
-SUBSCRIPT="${SCRIPT_PATH}/jobs/${JOBNAME}"
-
 MAILTO="julian.gieseke@gmail.com"
 
-LOCKFILE="${SCRIPT_PATH}/lock/cron.lock"
-PIDFILE="${SCRIPT_PATH}/lock/cron.pid"
-
-trap 'EC=$?; [ $EC -ne 0 ] && echo "❌ Exitcode $EC in $0 at $(date)."; rm -f "${LOCKFILE}"; trap - EXIT' EXIT SIGINT
-lockfile -600 -r5  "${LOCKFILE}"
-echo $$ > "${PIDFILE}"
-
-[ -z "${SUBSCRIPT}" ] && echo "ERROR: No \$SUBSCRIPT given" && exit 1;
-
+# some checks
 [ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
 
-annotate-output +"${JOBNAME} %F %T" ${SUBSCRIPT} > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
-  || echo -e "Subject: ❌ Error on Job '$(basename ${SUBSCRIPT})' at $(date)\n\n$(tac ${LOGFILE} | grep -m1 -B50000 🚛 | tail -n 100)" | ssmtp ${MAILTO} \
+# run backup job
+./run ${JOBNAME} > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
+  || echo -e "Subject: ❌ Error on Cronjob '${JOBNAME}' at $(date)\n\n$(tac ${LOGFILE} | grep -m1 -B50000 🚛 | tac | tail -n 100)" | ssmtp ${MAILTO} \
   || tail -n 100 ${LOGFILE}

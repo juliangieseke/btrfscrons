@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+# set some vars
+SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+JOBNAME="${1:-''}"
+LOCKFILE="${SCRIPT_PATH}/lock/cron.lock"
+SUBSCRIPT="${SCRIPT_PATH}/jobs/${JOBNAME}"
+MAILTO="julian.gieseke@gmail.com"
+
+# error trap
+err_report() {
+  echo "errexit on line $(caller)" >&2
+}
+trap err_report ERR
+
+# exit trap
+function teardown {
+  EC=$?
+  trap - EXIT
+  
+  # restart netatalk
+  if ! systemctl is-active netatalk > /dev/null
+  then
+    systemctl start netatalk && \
+      echo "Started netatalk." || \
+      EC=1
+  fi
+  
+  if [ ${EC} -ne 0 ]
+  then
+    echo "❌ Cronjob '${JOBNAME}' with exitcode ${EC} in ${0} at $(date)."
+  else
+    echo "✅ Cronjob '${JOBNAME}' after $(${SCRIPT_PATH}/bin/displaytime ${SECONDS}) at $(date)."
+  fi
+}
+trap teardown EXIT SIGINT
+
+# lockfile
+exec 200>$LOCKFILE
+flock -w 3600 200 || { echo "ERROR: Cant get file lock on ${LOCKFILE}" 1>&2; exit 1; }
+echo $$ 1>&200
+
+# print start
+echo -e "📅 Starting Cronjob '${JOBNAME}' at $(date) after $(${SCRIPT_PATH}/bin/displaytime ${SECONDS}) of waiting time."
+
+# some checks
+[ -z "${SUBSCRIPT}" ] && { echo "ERROR: No \$SUBSCRIPT given" 1&>2; exit 1; }
+
+# if time machine backup is running, wait for it to complete
+TM_ATTEMPTS=0
+while [ $(sudo lsof | grep /mnt/timemachine | wc -l) -ne 0 ] && [ $TM_ATTEMPTS -lt 6 ]
+do 
+  TM_ATTEMPTS=$((TM_ATTEMPTS + 1))
+  echo "Time Machine backup running… (${TM_ATTEMPTS}/6)"
+  sleep 600
+done
+
+# tm stil running? then fail
+if [ $(sudo lsof | grep /mnt/timemachine | wc -l) -ne 0 ]
+then
+  echo "ERROR: TM still running, giving up." 1>&2
+  exit 1
+fi
+
+# otherwise stop netatalk to prevent tm backups during btrfs send | btrfs receive
+systemctl stop netatalk && echo "Stopped netatalk."
+
+# run backup job
+${SUBSCRIPT}

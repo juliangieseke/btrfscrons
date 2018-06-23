@@ -17,22 +17,22 @@ MAILTO="julian.gieseke@gmail.com"
 MAILBODY="${SCRIPT_PATH}/mail.txt"
 
 # reset file contents with subject & motd
-echo -e "Todays System Report for $(hostname)\n\n=======================================\n" > ${MAILBODY}
-cat /var/run/motd.dynamic >> ${MAILBODY}
-echo -e "=======================================\n\n" >> ${MAILBODY}
+echo -e "Todays System Report for $(hostname)\n\n=======================================\n" | tee ${MAILBODY}
+cat /var/run/motd.dynamic | tee -a ${MAILBODY}
+echo -e "=======================================\n" | tee -a ${MAILBODY}
 
 # get the last lines of cron logfiles
 find ${SCRIPT_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "cron.*.log" | \
   while read LOGFILE
   do
-    echo -e "Exitcodes in $(basename ${LOGFILE})\n$(cat ${LOGFILE} | grep 'Finished with exitcode')\n\n" >> ${MAILBODY}
+    echo -e "Exitcodes in $(basename ${LOGFILE})\n$(cat ${LOGFILE} | grep '✅\|❌')\n" | tee -a ${MAILBODY}
   done
 
-echo -e ============================================== "\n" >> ${MAILBODY}
+echo -e ======================================= "\n" | tee -a ${MAILBODY}
 
-${SCRIPT_PATH}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') >> ${MAILBODY}
+${SCRIPT_PATH}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') | tee -a ${MAILBODY}
 
-echo -e "\n" ============================================== "\n" >> ${MAILBODY}
+echo -e ======================================= "\n" | tee -a ${MAILBODY}
 
 
 # send mail with all remaining logfiles as attachements

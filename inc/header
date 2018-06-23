@@ -5,33 +5,23 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-
 LOCKFILE="${BASE_PATH}/lock/${JOBNAME}.lock"
-PIDFILE="${BASE_PATH}/lock/${JOBNAME}.pid"
 
-trap 'EC=$?; [ $EC -ne 0 ] && echo "❌ Exitcode $EC in $0 at $(date)."; rm -f "${LOCKFILE}"; trap - EXIT' EXIT SIGINT
-lockfile -600 -r5  "${LOCKFILE}"
-echo $$ > "${PIDFILE}"
-
-
-echo -e "🚛 Starting at $(date)"
-
-function displaytime {
-
-  T=${1}
-
-  D=$((T/60/60/24))
-  H=$((T/60/60%24))
-  M=$((T/60%60))
-  S=$((T%60))
-
-  [[ $D > 1 ]] && printf '%d days ' $D
-  [[ $D == 1 ]] && printf '%d day ' $D
-  [[ $H > 1 ]] && printf '%d hours ' $H
-  [[ $H == 1 ]] && printf '%d hour ' $H
-  [[ $M > 1 ]] && printf '%d minutes ' $M
-  [[ $M == 1 ]] && printf '%d minute ' $M
-  [[ $D > 0 || $H > 0 || $M > 0 ]] && printf 'and '
-  [[ $S > 1 || $S == 0 ]] && printf '%d seconds' $S || printf '%d second' $S
-
+function teardown {
+  EC=$?
+  trap - EXIT
+  
+  if [ ${EC} -ne 0 ]
+  then
+    echo "❌ Backup '${JOBNAME}' with exitcode ${EC} in ${0} at $(date)."
+  else
+    echo "✅ Backup '${JOBNAME}' after $(${BASE_PATH}/bin/displaytime ${SECONDS}) at $(date)."
+  fi
 }
+trap teardown EXIT SIGINT
+
+exec 200>$LOCKFILE
+flock -w 3600 200 || { echo "ERROR: Cant get file lock on ${LOCKFILE}" 1>&2; exit 1; }
+echo $$ 1>&200
+
+echo -e "🚛 Starting Backup '${JOBNAME}' at $(date) after $(${BASE_PATH}/bin/displaytime ${SECONDS}) of waiting time."

@@ -14,8 +14,8 @@ echo;
 btrfs filesystem df /mnt/boot.disk/
 echo;
 # btrfs filesystem du -s /mnt/boot.disk/*
-echo;
-echo ==============================================
+# echo;
+echo =======================================
 echo;
 echo "data.disk (3T)"
 echo;
@@ -24,8 +24,8 @@ echo;
 btrfs filesystem df /mnt/data.disk/
 echo;
 # btrfs filesystem du -s /mnt/data.disk/*
-echo;
-echo ==============================================
+# echo;
+echo =======================================
 echo;
 echo "backups.disk (8T)"
 echo;
@@ -34,4 +34,4 @@ echo;
 btrfs filesystem df /mnt/backups.disk/
 echo;
 # btrfs filesystem du -s /mnt/backups.disk/*
-echo;
+# echo;
