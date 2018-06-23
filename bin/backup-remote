@@ -18,16 +18,16 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 
 if [ -n "${DST_REMOTE_BACKUPDIR}" ]
 then
-  RSYNCOPTS="${RSYNCOPTS} --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F-%H-%M-%S)/"
+  RSYNCOPTS="${RSYNCOPTS} --protect-args --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F-%H-%M-%S)/"
 fi
 
 if [ -n "${VPN_CONF}" ] && [ $(ping -W 5 -c 1 ${DST_HOST} > /dev/null; echo $?) -ne 0 ]
 then
   echo "Cannot ping Host, connecting to VPN (Host: ${DST_HOST})" 1>&2
-  /usr/sbin/vpnc ${VPN_CONF}
+  /usr/sbin/vpnc-connect ${VPN_CONF}
 fi
 
-RSYNCOPTS="${RSYNCOPTS}" ${SCRIPT_PATH}/backup-rsync ${SRC} ${DST_REMOTE}
+RSYNCOPTS="${RSYNCOPTS} --partial --compress" ${SCRIPT_PATH}/backup-rsync ${SRC} ${DST_REMOTE}
 
 # remove locally deleted files on remote after 90 days
 [ -n "${DST_REMOTE_BACKUPDIR}" ] \

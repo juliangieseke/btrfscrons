@@ -1,6 +1,0 @@
-#!/usr/bin/env bash
-
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
-
-cat /var/run/motd.dynamic

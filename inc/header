@@ -5,12 +5,16 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-LOCKFILE="${SCRIPT_PATH}/lock/${JOBNAME}.lock"
-lockfile -600 -r5  "${LOCKFILE}"
-echo $$ > "${LOCKFILE}"
-trap '[ $? -ne 0 ] && echo "❌ Stopped with errors at $(date)."; rm -f "${LOCKFILE}"; trap - EXIT' EXIT SIGINT
 
-echo -e "\n🚛 Starting at $(date)"
+LOCKFILE="${BASE_PATH}/lock/${JOBNAME}.lock"
+PIDFILE="${BASE_PATH}/lock/${JOBNAME}.pid"
+
+trap 'EC=$?; [ $EC -ne 0 ] && echo "❌ Exitcode $EC in $0 at $(date)."; rm -f "${LOCKFILE}"; trap - EXIT' EXIT SIGINT
+lockfile -600 -r5  "${LOCKFILE}"
+echo $$ > "${PIDFILE}"
+
+
+echo -e "🚛 Starting at $(date)"
 
 function displaytime {
 

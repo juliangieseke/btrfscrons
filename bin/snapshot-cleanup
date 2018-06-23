@@ -14,7 +14,7 @@ KEEPDAYS=${3:-'1'}
 
 if [ ${KEEPDAYS} -gt 0 ]
 then
-  find "${DST_SNAP%/}/" -maxdepth 1 -type d -name "*${JOBTYPE}*" -ctime ${KEEPDAYS} -exec ${SCRIPT_PATH}/snapshot-delete '{}' \;
+  find "${DST_SNAP%/}/" -maxdepth 1 -type d -name "*${JOBTYPE}*" -ctime +${KEEPDAYS} -exec ${SCRIPT_PATH}/snapshot-delete '{}' \;
 else
   echo "Cleanup disabled for ${JOBTYPE}"
 fi

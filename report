@@ -14,18 +14,35 @@ trap err_report ERR
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 MAILTO="julian.gieseke@gmail.com"
+MAILBODY="${SCRIPT_PATH}/mail.txt"
+
+# reset file contents with subject & motd
+echo -e "Todays System Report for $(hostname)\n\n=======================================\n" > ${MAILBODY}
+cat /var/run/motd.dynamic >> ${MAILBODY}
+echo -e "=======================================\n\n" >> ${MAILBODY}
+
+# get the last lines of cron logfiles
+find ${SCRIPT_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "cron.*.log" | \
+  while read LOGFILE
+  do
+    echo -e "Exitcodes in $(basename ${LOGFILE})\n$(cat ${LOGFILE} | grep 'Finished with exitcode')\n\n" >> ${MAILBODY}
+  done
+
+echo -e ============================================== "\n" >> ${MAILBODY}
+
+${SCRIPT_PATH}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') >> ${MAILBODY}
+
+echo -e "\n" ============================================== "\n" >> ${MAILBODY}
 
 
-echo -e "Subject: System Report $(hostname)\n\n$(${SCRIPT_PATH}/reports/system)" | ssmtp $MAILTO
+# send mail with all remaining logfiles as attachements
+cat ${MAILBODY} | mutt -s "System Report for $(hostname)" -a ${SCRIPT_PATH}/log/*.log -- $MAILTO
 
-echo -e "Subject: Log Report $(hostname)\n\n$(${SCRIPT_PATH}/reports/logs)" | ssmtp $MAILTO
-
-if [ "$(hostname)" == "Datenteich" ]
-then 
-  echo -e "Subject: Disk Report $(hostname)\n\n$(${SCRIPT_PATH}/reports/disks.datenteich)" | ssmtp $MAILTO
-elif [ "$(hostname)" == "Speichersee" ]
-then
-  echo -e "Subject: Disk Report $(hostname)\n\n$(${SCRIPT_PATH}/reports/disks.speichersee)" | ssmtp $MAILTO
-else
-  echo "unknown hostname" 1>&2
-fi
+# delete old logs: 
+find ${SCRIPT_PATH}/log -name '*.log' -mtime +2 | \
+  while read LOGFILE
+  do
+    echo -n "Deleting old logfile $(basename $LOGFILE)… "
+    rm '$LOGFILE'
+    echo "done."
+  done

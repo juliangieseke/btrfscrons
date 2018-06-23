@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+
+# set BASE_PATH
+BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
 # lockfile and traps
 JOBNAME='datenteich'
-source ${SCRIPT_PATH}/inc/header
+source ${BASE_PATH}/inc/header
 
 #config
 SRC='/mnt/data.disk/datenteich/'
@@ -17,26 +23,26 @@ VPN_CONF='bms'
 
 # gets $JOBNAME
 # sets $JOBTYPE
-source ${SCRIPT_PATH}/inc/jobtype
+source ${BASE_PATH}/inc/jobtype
 
 # gets $JOBTYPE
 # sets $KEEPDAYS
-source ${SCRIPT_PATH}/inc/keepdays
+source ${BASE_PATH}/inc/keepdays
 
 #################################################
 
 # create snapshot
-${SCRIPT_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${JOBTYPE}
+${BASE_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${JOBTYPE}
 
 # cleanup snapshots
-${SCRIPT_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${JOBTYPE} ${KEEPDAYS}
+${BASE_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${JOBTYPE} ${KEEPDAYS}
 
 # run local backups, if not hourly
-[ ${JOBTYPE} != 'hourly' ] && ${SCRIPT_PATH}/bin/retry-local ${JOBTYPE} ${SRC} ${DST_SNAP} ${DST_SEND}
+[[ -n "${FORCE_LOCAL}" || ${JOBTYPE} != 'hourly' ]] && ${BASE_PATH}/bin/retry-local ${JOBTYPE} ${SRC} ${DST_SNAP} ${DST_SEND}
 
 # run remote backups, if not hourly
-[[ -n "${FORCE_REMOTE}" || ${JOBTYPE} != 'hourly' ]] && ${SCRIPT_PATH}/bin/retry-remote ${JOBTYPE} ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF}
+[[ -n "${FORCE_REMOTE}" || ${JOBTYPE} != 'hourly' ]] && ${BASE_PATH}/bin/retry-remote ${JOBTYPE} ${SRC} ${DST_REMOTE} ${DST_REMOTE_BACKUPDIR} ${VPN_CONF}
 
 #################################################
 
-echo "✅ Successfully completed after $(displaytime ${SECONDS})."
+echo "✅ Successfully completed after $(displaytime ${SECONDS}) at $(date)."

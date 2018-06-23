@@ -1,50 +1,29 @@
 #!/usr/bin/env bash
 
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+# set BASE_PATH
+BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-echo "/"
+smartctl --all /dev/sda > ${BASE_PATH}/log/sda.smart.log
+smartctl --all /dev/sdb > ${BASE_PATH}/log/sdb.smart.log
+smartctl --all /dev/sdc > ${BASE_PATH}/log/sdc.smart.log
+
+echo "boot.disk (50G)"
 echo;
-echo "df:"
 df -hl /
 echo;
-echo "du:"
-du -sh /
-echo;
-echo "smart:"
-smartctl -i /dev/sda
-smartctl -A /dev/sda
-echo;
 echo ==============================================
 echo;
-echo "data.disk"
+echo "data.disk (3T)"
 echo;
-echo "df:"
 btrfs filesystem df /mnt/data.disk/
 echo;
-echo "du:"
-btrfs filesystem du -s /mnt/data.disk/
-echo;
-echo "smart:"
-smartctl -i /dev/sdb
-smartctl -A /dev/sdb
+# btrfs filesystem du -s /mnt/data.disk/*
 echo;
 echo ==============================================
 echo;
-echo "backups.disk"
+echo "backups.disk (3T)"
 echo;
-echo "df:"
 btrfs filesystem df /mnt/backups.disk/
 echo;
-echo "du:"
-btrfs filesystem du -s /mnt/backups.disk/
+# btrfs filesystem du -s /mnt/backups.disk/*
 echo;
-echo "smart:"
-smartctl -i /dev/sdc
-smartctl -A /dev/sdc
-echo;
-echo ==============================================
-echo;
-echo Mounts "(Count: $(mount | grep /mnt | wc -l))"
-find /mnt -maxdepth 1 -mindepth 1 -type d -exec btrfs fi show '{}' >/dev/null ';'
-mount | grep /mnt | cut -d \( -f1
