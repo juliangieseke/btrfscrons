@@ -22,12 +22,15 @@ cat /var/run/motd.dynamic | tee -a ${MAILBODY}
 echo -e "=======================================\n" | tee -a ${MAILBODY}
 
 # get the last lines of cron logfiles
-find ${SCRIPT_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "cron.*.log" | \
+echo -e "Exitcodes in Logfiles:\n" | tee -a ${MAILBODY}
+find ${SCRIPT_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "*.log" | \
   while read LOGFILE
   do
-    echo -e "Exitcodes in $(basename ${LOGFILE})\n$(cat ${LOGFILE} | grep -E '^[✅❌] Cronjob')\n" | tee -a ${MAILBODY}
+    echo $(basename "${LOGFILE}") | tee -a ${MAILBODY}
+    tail -n1 ${LOGFILE} | tee -a ${MAILBODY}
   done
 
+echo;
 echo -e ======================================= "\n" | tee -a ${MAILBODY}
 
 ${SCRIPT_PATH}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') | tee -a ${MAILBODY}
@@ -39,7 +42,7 @@ echo -e ======================================= "\n" | tee -a ${MAILBODY}
 cat ${MAILBODY} | mutt -s "System Report for $(hostname)" -a ${SCRIPT_PATH}/log/*.log -- $MAILTO
 
 # delete old logs: 
-find ${SCRIPT_PATH}/log -name '*.log' -mtime +1 | \
+find ${SCRIPT_PATH}/log -name '*.log' | \
   while read LOGFILE
   do
     echo -n "Deleting old logfile $(basename $LOGFILE)… "
