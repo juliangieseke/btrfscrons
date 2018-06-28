@@ -5,14 +5,24 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-SRC=${1:-''}
-DST_SNAP=${2:-''}
-JOBTYPE=${3:-'hourly'}
+JOBNAME=${1:-''}
+SRC=${2:-''}
+DST=${3:-''}
+
+# gets $JOBNAME
+# sets $JOBTYPE
+source ${BASE_PATH}/inc/jobtype
+
+# gets $JOBTYPE
+# sets $KEEPDAYS
+source ${BASE_PATH}/inc/keepdays
+
+
 
 SNAPSHOTNAME="$(date '+%F-%H-%M-%S')-${JOBTYPE}"
-[ -d "${DST_SNAP%/}/${SNAPSHOTNAME}" ] && ( echo "ERROR: '${SNAPSHOTNAME}' already exists."; exit 1 )
+[ -d "${DST%/}/${SNAPSHOTNAME}" ] && ( echo "ERROR: '${SNAPSHOTNAME}' already exists."; exit 1 )
 
 # update timestamp, fails if SRC is ""
 touch ${SRC}
 
-btrfs subvolume snapshot -r "${SRC}" "${DST_SNAP%/}/${SNAPSHOTNAME}"
+btrfs subvolume snapshot -r "${SRC}" "${DST%/}/${SNAPSHOTNAME}"

@@ -5,6 +5,10 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
+FORCE_LOCAL=${FORCE_LOCAL:-''}
+FORCE_REMOTE=${FORCE_REMOTE:-''}
+RSYNCOPTS="${RSYNCOPTS:-""}"
+
 # set some vars
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 JOBNAME="${1:-''}"
@@ -15,6 +19,6 @@ MAILTO="julian.gieseke@gmail.com"
 [ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
 
 # run backup job
-./run ${JOBNAME} > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
-  || echo -e "Subject: ❌ Error on Cronjob '${JOBNAME}' at $(date)\n\n$(tac ${LOGFILE} | grep -m1 -B50000 🚛 | tac | tail -n 100)" | ssmtp ${MAILTO} \
-  || tail -n 100 ${LOGFILE}
+${SCRIPT_PATH}/run ${JOBNAME} > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
+  || echo -e "Subject: ❌ Error on Cronjob '${JOBNAME}' at $(date)\n\n$(tail -n 20 ${LOGFILE})" | ssmtp ${MAILTO} \
+  || tail -n 20 ${LOGFILE}

@@ -14,6 +14,22 @@ SRC=${2:-''}
 DST_SNAP=${3:-''}
 DST_SEND=${4:-''}
 
+
+# exit trap
+function teardown {
+  trap - EXIT
+  # restart netatalk
+  if ! systemctl is-active netatalk > /dev/null
+  then
+    systemctl start netatalk && \
+      echo "Started netatalk." || \
+      EC=1
+  fi
+}
+trap teardown EXIT SIGINT
+# stop netatalk to prevent tm backups during btrfs send | btrfs receive
+systemctl stop netatalk && echo "Stopped netatalk."
+
 # run local backup
 RETURN=1
 ATTEMPT=1

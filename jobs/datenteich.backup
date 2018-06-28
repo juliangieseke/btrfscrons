@@ -13,16 +13,16 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
 # lockfile and traps
-JOBNAME='speichersee'
+JOBNAME='datenteich'
 source ${BASE_PATH}/inc/header
 
 #config
-SRC='/mnt/data.disk/speichersee/'
-DST_SNAP='/mnt/data.disk/speichersee.snapshots/'
-DST_SEND='/mnt/backups.disk/speichersee.snapshots/'
-DST_REMOTE='speichersee@192.168.187.11:/mnt/backups.disk/speichersee/'
-DST_REMOTE_BACKUPDIR='/mnt/backups.disk/speichersee.backups/'
-VPN_CONF='hhs'
+SRC='/mnt/data.disk/datenteich/'
+DST_SNAP='/mnt/data.disk/datenteich.snapshots/'
+DST_SEND='/mnt/backups.disk/datenteich.snapshots/'
+DST_REMOTE='datenteich@192.168.152.11:/mnt/backups.disk/datenteich/'
+DST_REMOTE_BACKUPDIR='/mnt/backups.disk/datenteich.backups/'
+VPN_CONF='bms'
 
 # gets $JOBNAME
 # sets $JOBTYPE
@@ -33,12 +33,6 @@ source ${BASE_PATH}/inc/jobtype
 source ${BASE_PATH}/inc/keepdays
 
 #################################################
-
-# create snapshot
-${BASE_PATH}/bin/snapshot-create "${SRC}" "${DST_SNAP}" "${JOBTYPE}"
-
-# cleanup snapshots
-${BASE_PATH}/bin/snapshot-cleanup "${DST_SNAP}" "${JOBTYPE}" "${KEEPDAYS}"
 
 # run local backups, if not hourly
 if [[ -n "${FORCE_LOCAL}" || ${JOBTYPE} != 'hourly' ]]

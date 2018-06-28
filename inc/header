@@ -6,6 +6,7 @@ DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
 LOCKFILE="${BASE_PATH}/lock/${JOBNAME}.lock"
+QUEUETIME=0
 
 function teardown {
   EC=$?
@@ -13,15 +14,19 @@ function teardown {
   
   if [ ${EC} -ne 0 ]
   then
-    echo "❌ Backup '${JOBNAME}' with exitcode ${EC} in ${0} at $(date)."
+    echo "❌ Backup '${JOBNAME}' 🛑 ${EC} 🗃 ${0} 📅 $(date) 🏁 $(${BASE_PATH}/bin/displaytime $((SECONDS - QUEUETIME)))."
   else
-    echo "✅ Backup '${JOBNAME}' after $(${BASE_PATH}/bin/displaytime ${SECONDS}) at $(date)."
+    echo "✅ Backup '${JOBNAME}' 📅 $(date) 🏁 $(${BASE_PATH}/bin/displaytime $((SECONDS - QUEUETIME)))."
   fi
-}
-trap teardown EXIT SIGINT
 
-exec 200>$LOCKFILE
-flock -w 3600 200 || { echo "ERROR: Cant get file lock on ${LOCKFILE}" 1>&2; exit 1; }
+  flock --unlock 200
+}
+
+exec 200>${LOCKFILE}
+flock --wait 3600 200 || exit 7
 echo $$ 1>&200
 
-echo -e "🚛 Starting Backup '${JOBNAME}' at $(date) after $(${BASE_PATH}/bin/displaytime ${SECONDS}) of waiting time."
+trap teardown EXIT SIGINT
+
+echo -e "🎬 Backup '${JOBNAME}' 📅 $(date) ⌛️ $(${BASE_PATH}/bin/displaytime ${SECONDS})."
+QUEUETIME=${SECONDS}

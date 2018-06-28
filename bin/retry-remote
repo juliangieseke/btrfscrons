@@ -6,6 +6,8 @@ trap 'exit 1' SIGINT
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
+RSYNCOPTS="${RSYNCOPTS:-""}"
+
 # set SCRIPT_PATH
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 

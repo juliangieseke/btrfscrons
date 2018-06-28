@@ -5,6 +5,8 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
+FORCE_LOCAL=${FORCE_LOCAL:-''}
+
 # set BASE_PATH
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
@@ -33,8 +35,3 @@ ${BASE_PATH}/bin/snapshot-create ${SRC} ${DST_SNAP} ${JOBTYPE}
 # cleanup snapshots
 ${BASE_PATH}/bin/snapshot-cleanup ${DST_SNAP} ${JOBTYPE} ${KEEPDAYS}
 
-# run backups, if not hourly
-if [ "$(hostname)" == "Datenteich" ] && [[ -n "${FORCE_LOCAL}" || ${JOBTYPE} != 'hourly' ]]
-then
-  ${BASE_PATH}/bin/retry-local ${JOBTYPE} ${SRC} ${DST_SNAP} ${DST_SEND}
-fi

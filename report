@@ -25,7 +25,7 @@ echo -e "=======================================\n" | tee -a ${MAILBODY}
 find ${SCRIPT_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "cron.*.log" | \
   while read LOGFILE
   do
-    echo -e "Exitcodes in $(basename ${LOGFILE})\n$(cat ${LOGFILE} | grep '✅\|❌')\n" | tee -a ${MAILBODY}
+    echo -e "Exitcodes in $(basename ${LOGFILE})\n$(cat ${LOGFILE} | grep -E '^[✅❌] Cronjob')\n" | tee -a ${MAILBODY}
   done
 
 echo -e ======================================= "\n" | tee -a ${MAILBODY}
@@ -39,10 +39,10 @@ echo -e ======================================= "\n" | tee -a ${MAILBODY}
 cat ${MAILBODY} | mutt -s "System Report for $(hostname)" -a ${SCRIPT_PATH}/log/*.log -- $MAILTO
 
 # delete old logs: 
-find ${SCRIPT_PATH}/log -name '*.log' -mtime +2 | \
+find ${SCRIPT_PATH}/log -name '*.log' -mtime +1 | \
   while read LOGFILE
   do
     echo -n "Deleting old logfile $(basename $LOGFILE)… "
-    rm '$LOGFILE'
+    rm "$LOGFILE"
     echo "done."
   done
