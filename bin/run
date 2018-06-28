@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+set -e
+
+DEBUG=${DEBUG:-''}
+[ -n "${DEBUG}" ] && set -x
+
+RSYNCOPTS="${RSYNCOPTS:-""}"
+
+# set some vars
+BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+LOGFILE="${BASE_PATH}/log/run.${1}.$(basename --suffix=.snapshots "${2}").$(date +%F-%H-%M-%S).log"
+MAILTO="julian.gieseke@gmail.com"
+
+# some checks
+[ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
+
+#first param is subscript name
+SUBSCRIPT=${1}
+
+#remove first parameter from list
+shift
+
+# run backup job
+annotate-output ${BASE_PATH}/bin/${SUBSCRIPT} "$@" > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
+  || echo -e "Subject: ❌ Error on Cronjob ${SUBSCRIPT} $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
+  || cat ${LOGFILE}

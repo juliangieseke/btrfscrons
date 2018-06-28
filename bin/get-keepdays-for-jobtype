@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 
-KEEPDAYS=${KEEPDAYS:-0}
-
-if [ ${KEEPDAYS} -ne 0 ]
+JOBTYPE=${1:-''}
+if [ -z "${JOBTYPE}" ]
 then
-  echo "Manually set \$KEEPDAYS to '${KEEPDAYS}'"
-  return
+  echo "ERROR: No \$JOBTYPE given." 2>&1
+  exit 1
 fi
 
 case ${JOBTYPE} in
@@ -22,3 +21,7 @@ case ${JOBTYPE} in
     KEEPDAYS=360
     ;;
 esac
+
+
+echo ${KEEPDAYS}
+exit 0

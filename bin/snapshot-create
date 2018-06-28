@@ -1,28 +1,25 @@
 #!/usr/bin/env bash
 
+# example: 
+# /mnt/.bkp/bin/snapshot-create /mnt/data.disk/datenteich.share /mnt/data.disk/datenteich.snapshots
+
 set -e
 
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-JOBNAME=${1:-''}
-SRC=${2:-''}
-DST=${3:-''}
+SRC=${1:-''}
+DST=${2:-''}
 
-# gets $JOBNAME
-# sets $JOBTYPE
-source ${BASE_PATH}/inc/jobtype
+BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-# gets $JOBTYPE
-# sets $KEEPDAYS
-source ${BASE_PATH}/inc/keepdays
-
-
+JOBTYPE=$(${BASE_PATH}/bin/get-jobtype-for-folder ${DST})
+KEEPDAYS=$(${BASE_PATH}/bin/get-keepdays-for-jobtype ${JOBTYPE})
 
 SNAPSHOTNAME="$(date '+%F-%H-%M-%S')-${JOBTYPE}"
 [ -d "${DST%/}/${SNAPSHOTNAME}" ] && ( echo "ERROR: '${SNAPSHOTNAME}' already exists."; exit 1 )
 
-# update timestamp, fails if SRC is ""
+# update timestamp for find commands - this also fails if SRC is ""
 touch ${SRC}
 
 btrfs subvolume snapshot -r "${SRC}" "${DST%/}/${SNAPSHOTNAME}"

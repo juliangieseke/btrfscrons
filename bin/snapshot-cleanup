@@ -1,20 +1,20 @@
 #!/usr/bin/env bash
 
+# example: 
+# /mnt/.bkp/bin/snapshot-cleanup /mnt/data.disk/datenteich.snapshots
+
 set -e
 
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+DST=${1:-''}
 
-DST_SNAP=${1:-''}
-JOBTYPE=${2:-'hourly'}
-KEEPDAYS=${3:-'1'}
+BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-if [ ${KEEPDAYS} -gt 0 ]
-then
-  find "${DST_SNAP%/}/" -maxdepth 1 -type d -name "*${JOBTYPE}*" -ctime +${KEEPDAYS} -exec ${SCRIPT_PATH}/snapshot-delete '{}' \;
-else
-  echo "Cleanup disabled for ${JOBTYPE}"
-fi
+JOBTYPES=( hourly daily weekly monthly )
+for JOBTYPE in "${JOBTYPES[@]}"
+do
+    KEEPDAYS=$(${BASE_PATH}/bin/get-keepdays-for-jobtype ${JOBTYPE})
+    find "${DST%/}/" -maxdepth 1 -type d -name "*${JOBTYPE}*" -ctime +${KEEPDAYS} -exec ${BASE_PATH}/bin/snapshot-delete '{}' \;
+done

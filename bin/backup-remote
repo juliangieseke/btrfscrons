@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
+# example: 
+# /mnt/.bkp/bin/backup-remote /mnt/data.disk/datenteich.share datenteich@192.168.152.11:/mnt/backups.disk/datenteich/ /mnt/backup.disk/datenteich.backups bms
+
+# TODO: https://lincolnloop.com/blog/detecting-file-moves-renames-rsync/
+
 set -e
 
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+# set BASE_PATH
+BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
 SRC=${1:-''}
 DST_REMOTE=${2:-''}
@@ -15,6 +20,20 @@ VPN_CONF=${4:-''}
 DST_USER="$(echo "${DST_REMOTE}" | cut -d@ -f1)"
 DST_HOST="$(echo "${DST_REMOTE}" | cut -d@ -f2 | cut -d: -f1)"
 RSYNCOPTS="${RSYNCOPTS:-""}"
+
+
+# exit trap
+function teardown {
+  trap - EXIT
+
+  flock --unlock 200
+}
+
+exec 200>${BASE_PATH}/lock/backup-remote.lock
+flock -n 200 || exit 7
+echo $$ 1>&200
+
+trap teardown EXIT SIGINT
 
 if [ -n "${DST_REMOTE_BACKUPDIR}" ]
 then
@@ -27,7 +46,7 @@ then
   /usr/sbin/vpnc-connect ${VPN_CONF}
 fi
 
-RSYNCOPTS="${RSYNCOPTS} --partial --compress" ${SCRIPT_PATH}/backup-rsync ${SRC} ${DST_REMOTE}
+RSYNCOPTS="${RSYNCOPTS} --partial --compress" ${BASE_PATH}/bin/backup-rsync ${SRC} ${DST_REMOTE}
 
 # remove locally deleted files on remote after 90 days
 [ -n "${DST_REMOTE_BACKUPDIR}" ] \

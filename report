@@ -14,7 +14,7 @@ trap err_report ERR
 SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
 
 MAILTO="julian.gieseke@gmail.com"
-MAILBODY="${SCRIPT_PATH}/mail.txt"
+MAILBODY="${SCRIPT_PATH}/reports/mail.txt"
 
 # reset file contents with subject & motd
 echo -e "Todays System Report for $(hostname)\n\n=======================================\n" | tee ${MAILBODY}

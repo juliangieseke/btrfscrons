@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+FOLDER_PATH=${1:-''}
+if [ -z "${FOLDER_PATH}" ]
+then
+  echo "ERROR: No \$FOLDER_PATH given." 2>&1
+  exit 1
+fi 
+
+JOBTYPE='hourly'
+
+if [ $(find "${FOLDER_PATH%/}/" -maxdepth 1 -type d -name "*-daily" -ctime -1 | wc -l) -eq 0 ]
+then
+  JOBTYPE='daily'
+fi
+
+if [ $(find "${FOLDER_PATH%/}/" -maxdepth 1 -type d -name "*-weekly" -ctime -7 | wc -l) -eq 0 ]
+then
+  JOBTYPE='weekly'
+fi
+
+if [ $(find "${FOLDER_PATH%/}/" -maxdepth 1 -type d -name "*-monthly" -ctime -28 | wc -l) -eq 0 ]
+then
+  JOBTYPE='monthly'
+fi
+
+echo ${JOBTYPE}

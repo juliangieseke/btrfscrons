@@ -5,8 +5,31 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+# set BASE_PATH
+BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+
+
+# exit trap
+function teardown {
+  trap - EXIT
+  
+  if ! systemctl is-active netatalk > /dev/null
+  then
+    systemctl start netatalk && echo "Started netatalk."
+  fi
+
+  flock --unlock 200
+}
+
+exec 200>${BASE_PATH}/lock/backup-snapshots.lock
+flock -n 200 || exit 7
+echo $$ 1>&200
+
+trap teardown EXIT SIGINT
+
+# stop netatalk to prevent tm backups during btrfs send | btrfs receive
+systemctl stop netatalk && echo "Stopped netatalk."
+
 
 DST_SNAP=${1:-''}
 DST_SEND=${2:-''}
@@ -25,8 +48,8 @@ do
       btrfs send -p "${DST_SNAP%/}/${PARENT}" "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
         || {
           echo "ERROR: btrfs receive failed, trying to clean up" 1>&2
-          [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}" \
-            || [ -d ${DST_SEND%/}/${PARENT} ] &&  ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${PARENT}"
+          [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}" \
+            || [ -d ${DST_SEND%/}/${PARENT} ] &&  ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${PARENT}"
           exit 1
         }
     else
@@ -34,7 +57,7 @@ do
       btrfs send "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
         || {
           echo "ERROR: btrfs receive failed, trying to clean up"
-          [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+          [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
           exit 1
         }
     fi
@@ -42,7 +65,7 @@ do
     if [ -z "$(btrfs subvolume show "${DST_SEND%/}/${SNAPSHOT}" | grep readonly)" ]
     then
       echo "ERROR: Sent snapshot is not readonly, deleting it" 1>&2
-      ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+      ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
     fi
   fi
   PARENT=${SNAPSHOT}
@@ -54,6 +77,6 @@ do
   SNAPSHOT="$(basename ${SNAPSHOT})"
   if [ ! -d "${DST_SNAP%/}/${SNAPSHOT}" ]
   then
-    ${SCRIPT_PATH}/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+    ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
   fi
 done

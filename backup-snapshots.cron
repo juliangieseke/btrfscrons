@@ -1,0 +1,13 @@
+#!/bin/bash
+
+if [ "$(hostname)" == "Datenteich" ]
+then
+    /mnt/.bkp/bin/run retry backup-snapshots /mnt/data.disk/resilio.snapshots /mnt/backups.disk/resilio.snapshots
+    /mnt/.bkp/bin/run retry backup-snapshots /mnt/data.disk/datenteich.snapshots /mnt/backups.disk/datenteich.snapshots
+    /mnt/.bkp/bin/run retry backup-snapshots /mnt/boot.disk/rootfs.snapshots /mnt/backups.disk/rootfs.snapshots
+fi
+
+if [ "$(hostname)" == "Speichersee" ]
+then
+    /mnt/.bkp/bin/run retry backup-snapshots /mnt/data.disk/speichersee.snapshots /mnt/backups.disk/speichersee.snapshots
+fi

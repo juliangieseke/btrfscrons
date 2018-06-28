@@ -19,5 +19,5 @@ then
   exit 1
 fi
 
-echo "Backup to $DST"
+echo "Backup to $DST (${RSYNCOPTS})"
 /usr/bin/rsync --recursive --links --perms --times --group --owner --devices --specials --delete --delete-excluded --prune-empty-dirs $RSYNCOPTS "${SRC}" "${DST}"
