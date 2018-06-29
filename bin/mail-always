@@ -9,7 +9,7 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 
 # set some vars
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
-LOGFILE="${BASE_PATH}/log/run.${1}.$(basename --suffix=.snapshots "${2}").$(date +%F-%H-%M-%S).log"
+LOGFILE="${BASE_PATH}/log/$(date +%Y%m%d%-H%M%S).${1}.$(basename --suffix=.snapshots "${2}").log"
 MAILTO="julian.gieseke@gmail.com"
 
 # some checks
@@ -22,6 +22,7 @@ SUBSCRIPT=${1}
 shift
 
 # run backup job
-annotate-output ${BASE_PATH}/bin/${SUBSCRIPT} "$@" > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
-  || echo -e "Subject: ❌ Error on Cronjob ${SUBSCRIPT} $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
+annotate-output '+%F %T' ${SUBSCRIPT} "$@" > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
+  && echo -e "Subject: ✅ Finished $(basename ${SUBSCRIPT}) $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
+  || echo -e "Subject: ❌ Error in $(basename ${SUBSCRIPT}) $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
   || cat ${LOGFILE}

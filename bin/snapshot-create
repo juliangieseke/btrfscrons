@@ -9,12 +9,23 @@ DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
 SRC=${1:-''}
+if [ -z "${SRC}" ]
+then
+  echo "ERROR: No \$SRC given." 2>&1
+  exit 1
+fi
+
 DST=${2:-''}
+if [ -z "${DST}" ]
+then
+  echo "ERROR: No \$DST given." 2>&1
+  exit 1
+fi
 
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-JOBTYPE=$(${BASE_PATH}/bin/get-jobtype-for-folder ${DST})
-KEEPDAYS=$(${BASE_PATH}/bin/get-keepdays-for-jobtype ${JOBTYPE})
+JOBTYPE=$(${BASE_PATH}/bin/get-jobtype ${DST})
+KEEPDAYS=$(${BASE_PATH}/bin/get-keepdays ${JOBTYPE})
 
 SNAPSHOTNAME="$(date '+%F-%H-%M-%S')-${JOBTYPE}"
 [ -d "${DST%/}/${SNAPSHOTNAME}" ] && ( echo "ERROR: '${SNAPSHOTNAME}' already exists."; exit 1 )

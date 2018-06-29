@@ -10,11 +10,10 @@ err_report() {
 }
 trap err_report ERR
 
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
+BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
 MAILTO="julian.gieseke@gmail.com"
-MAILBODY="${SCRIPT_PATH}/reports/mail.txt"
+MAILBODY="${BASE_PATH}/reports/mail.txt"
 
 # reset file contents with subject & motd
 echo -e "Todays System Report for $(hostname)\n\n=======================================\n" | tee ${MAILBODY}
@@ -23,26 +22,26 @@ echo -e "=======================================\n" | tee -a ${MAILBODY}
 
 # get the last lines of cron logfiles
 echo -e "Exitcodes in Logfiles:\n" | tee -a ${MAILBODY}
-find ${SCRIPT_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "*.log" | \
+find ${BASE_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "*.log" | \
   while read LOGFILE
   do
-    echo $(basename "${LOGFILE}") | tee -a ${MAILBODY}
-    tail -n1 ${LOGFILE} | tee -a ${MAILBODY}
+    echo -n "$(basename --suffix=.log "${LOGFILE}"): " | tee -a ${MAILBODY}
+    { [ $(echo "exitcode 0" | grep 'exitcode 0' | wc -l) -eq 1 ] && echo ✅ || echo ❌; } | tee -a ${MAILBODY}
   done
 
 echo;
 echo -e ======================================= "\n" | tee -a ${MAILBODY}
 
-${SCRIPT_PATH}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') | tee -a ${MAILBODY}
+${BASE_PATH}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') | tee -a ${MAILBODY}
 
 echo -e ======================================= "\n" | tee -a ${MAILBODY}
 
 
 # send mail with all remaining logfiles as attachements
-cat ${MAILBODY} | mutt -s "System Report for $(hostname)" -a ${SCRIPT_PATH}/log/*.log -- $MAILTO
+cat ${MAILBODY} | mutt -s "System Report for $(hostname)" -a ${BASE_PATH}/log/*.log -- $MAILTO
 
 # delete old logs: 
-find ${SCRIPT_PATH}/log -name '*.log' | \
+find ${BASE_PATH}/log -name '*.log' | \
   while read LOGFILE
   do
     echo -n "Deleting old logfile $(basename $LOGFILE)… "
