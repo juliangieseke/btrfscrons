@@ -9,7 +9,12 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 
 # set some vars
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
-LOGFILE="${BASE_PATH}/log/$(date +%Y%m%d%-H%M%S).${1}.$(basename --suffix=.snapshots "${2}").log"
+if [ "${1}" == "retry" ]
+then
+  LOGFILE="${BASE_PATH}/log/$(date +%Y%m%d%-H%M%S).$(basename ${2}).$(basename --suffix=.snapshots "${3}").log"
+else
+  LOGFILE="${BASE_PATH}/log/$(date +%Y%m%d%-H%M%S).$(basename ${1}).$(basename --suffix=.snapshots "${2}").log"
+fi
 MAILTO="julian.gieseke@gmail.com"
 
 # some checks
@@ -23,6 +28,5 @@ shift
 
 # run backup job
 annotate-output '+%F %T' ${SUBSCRIPT} "$@" > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
-  && echo -e "Subject: ✅ Finished $(basename ${SUBSCRIPT}) $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
   || echo -e "Subject: ❌ Error in $(basename ${SUBSCRIPT}) $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
   || cat ${LOGFILE}

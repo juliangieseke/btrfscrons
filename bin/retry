@@ -10,13 +10,10 @@ DEBUG=${DEBUG:-''}
 
 RSYNCOPTS="${RSYNCOPTS:-""}"
 
-# set BASE_PATH
+# set some vars
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-#first param is subscript name
 SUBSCRIPT=${1}
-
-#remove first parameter from list
 shift
 
 # run remote backup

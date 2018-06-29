@@ -1,14 +1,10 @@
 ```
 # create snapshots: btrfs subvolume snapshot -r
-7 * * * * sudo /mnt/.bkp/cron/snapshot-create
+7 * * * * sudo /mnt/.bkp/cron/hourly > /dev/null
 
 # cleanup snapshots: btrfs subvolume delete
-13 * * * * sudo /mnt/.bkp/cron/snapshot-cleanup
-
 # backup snapshots: btrfs send | btrfs receive (this disables netatalk)
 # backup remote: rsync
-23 0 * * * sudo /mnt/.bkp/cron/backups
-
 # report
-42 5 * * * sudo /mnt/.bkp/cron/report
+13 0 * * * sudo /mnt/.bkp/cron/daily > /dev/null
 ```

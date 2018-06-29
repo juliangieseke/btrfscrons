@@ -15,6 +15,6 @@ BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 JOBTYPES=( hourly daily weekly monthly )
 for JOBTYPE in "${JOBTYPES[@]}"
 do
-    KEEPDAYS=$(${BASE_PATH}/bin/get-keepdays-for-jobtype ${JOBTYPE})
+    KEEPDAYS=$(${BASE_PATH}/bin/get-keepdays ${JOBTYPE})
     find "${DST%/}/" -maxdepth 1 -type d -name "*${JOBTYPE}*" -ctime +${KEEPDAYS} -exec ${BASE_PATH}/bin/snapshot-delete '{}' \;
 done

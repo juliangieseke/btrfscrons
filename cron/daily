@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+# no set -e here, we want to run all subscript, even if one fails!
+
+PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd ../bin && pwd):${PATH}"
+
+log snapshot-cleanup /mnt/data.disk/resilio.snapshots
+
+if [ "$(hostname)" == "Datenteich" ]
+then
+    log snapshot-cleanup /mnt/data.disk/datenteich.snapshots
+    log snapshot-cleanup /mnt/boot.disk/rootfs.snapshots
+
+    log retry backup-snapshots /mnt/data.disk/resilio.snapshots /mnt/backups.disk/resilio.snapshots
+    log retry backup-snapshots /mnt/data.disk/datenteich.snapshots /mnt/backups.disk/datenteich.snapshots
+    log retry backup-snapshots /mnt/boot.disk/rootfs.snapshots /mnt/backups.disk/rootfs.snapshots
+
+    log retry backup-remote /mnt/data.disk/datenteich/ datenteich@192.168.152.11:/mnt/backups.disk/datenteich/ /mnt/backups.disk/datenteich.backups bms
+fi
+
+if [ "$(hostname)" == "Speichersee" ]
+then
+    log snapshot-cleanup /mnt/data.disk/speichersee.snapshots
+
+    log retry backup-snapshots /mnt/data.disk/speichersee.snapshots /mnt/backups.disk/speichersee.snapshots
+
+    log retry backup-remote /mnt/data.disk/speichersee/ speichersee@192.168.187.11:/mnt/backups.disk/speichersee/ /mnt/backups.disk/speichersee.backups hhs
+fi
+
+report
