@@ -27,6 +27,13 @@ echo $$ 1>&200
 
 trap teardown EXIT SIGINT
 
+# # TM keeps connection open :(
+# while [ $(lsof | grep /mnt/timemachine | wc -l) -ne 0 ]
+# do
+#   echo "Time Machine running, waiting…" 1>&2
+#   sleep 60
+# done
+
 # stop netatalk to prevent tm backups during btrfs send | btrfs receive
 systemctl stop netatalk && echo "Stopped netatalk."
 

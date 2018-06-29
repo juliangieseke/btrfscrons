@@ -9,15 +9,14 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 
 # set some vars
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+MAILTO="julian.gieseke@gmail.com"
+LOGFILE="${BASE_PATH}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
+
 if [ "${1}" == "retry" ]
 then
-  LOGFILE="${BASE_PATH}/log/$(date +%Y%m%d%-H%M%S).$(basename ${2}).$(basename --suffix=.snapshots "${3}").log"
-else
-  LOGFILE="${BASE_PATH}/log/$(date +%Y%m%d%-H%M%S).$(basename ${1}).$(basename --suffix=.snapshots "${2}").log"
+  LOGFILE="${BASE_PATH}/log/$(basename ${2}).$(printf '%x' $(date +%s%N)).log"
 fi
-MAILTO="julian.gieseke@gmail.com"
 
-# some checks
 [ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
 
 #first param is subscript name

@@ -16,7 +16,7 @@ BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 SUBSCRIPT=${1}
 shift
 
-# run remote backup
+# run subscript
 RETURN=1
 ATTEMPT=1
 RETRY=3

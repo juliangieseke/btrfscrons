@@ -26,6 +26,12 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 function teardown {
   trap - EXIT
 
+  # grep itself is listed in top, that swhy we check for 1
+  if [ "$(top -cbn1 | grep ${DST_USER}@${DST_HOST} | wc -l)" -eq 1 ]
+  then
+    /usr/sbin/vpnc-disconnect
+  fi
+
   flock --unlock 200
 }
 
@@ -52,9 +58,3 @@ RSYNCOPTS="${RSYNCOPTS} --partial --compress --no-inc-recursive " ${BASE_PATH}/b
 [ -n "${DST_REMOTE_BACKUPDIR}" ] \
   && ssh ${DST_USER}@${DST_HOST} \
     find "${DST_REMOTE_BACKUPDIR}" -mindepth 1 -maxdepth 1 -type d -ctime 90 -exec "echo Deleting remote backup directory '{}' \;" -exec "rm -rf '{}' \;"
-
-# grep itself is listed in top, that swhy we check for 1
-if [ "$(top -cbn1 | grep ${DST_USER}@${DST_HOST} | wc -l)" -eq 1 ]
-then
-  /usr/sbin/vpnc-disconnect
-fi

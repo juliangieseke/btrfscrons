@@ -11,20 +11,47 @@ then
     log snapshot-cleanup /mnt/data.disk/datenteich.snapshots
     log snapshot-cleanup /mnt/boot.disk/rootfs.snapshots
 
-    log retry backup-snapshots /mnt/data.disk/resilio.snapshots /mnt/backups.disk/resilio.snapshots
-    log retry backup-snapshots /mnt/data.disk/datenteich.snapshots /mnt/backups.disk/datenteich.snapshots
-    log retry backup-snapshots /mnt/boot.disk/rootfs.snapshots /mnt/backups.disk/rootfs.snapshots
+    {
+        log retry backup-snapshots /mnt/data.disk/resilio.snapshots /mnt/backups.disk/resilio.snapshots
+        log retry backup-snapshots /mnt/data.disk/datenteich.snapshots /mnt/backups.disk/datenteich.snapshots
+        log retry backup-snapshots /mnt/boot.disk/rootfs.snapshots /mnt/backups.disk/rootfs.snapshots
+    } &
+    SNAP_PID=$!
 
-    log retry backup-remote /mnt/data.disk/datenteich/ datenteich@192.168.152.11:/mnt/backups.disk/datenteich/ /mnt/backups.disk/datenteich.backups bms
+    {
+        log retry backup-remote $(find /mnt/data.disk/datenteich.snapshots/ -maxdepth 1 -type d | tail -n1) datenteich@192.168.152.11:/mnt/backups.disk/datenteich/ /mnt/backups.disk/datenteich.backups bms
+    } &
+    REMOTE_PID=$!
 fi
 
 if [ "$(hostname)" == "Speichersee" ]
 then
     log snapshot-cleanup /mnt/data.disk/speichersee.snapshots
 
-    log retry backup-snapshots /mnt/data.disk/speichersee.snapshots /mnt/backups.disk/speichersee.snapshots
+    {
+        log retry backup-snapshots /mnt/data.disk/speichersee.snapshots /mnt/backups.disk/speichersee.snapshots
+    } &
+    SNAP_PID=$!
 
-    log retry backup-remote /mnt/data.disk/speichersee/ speichersee@192.168.187.11:/mnt/backups.disk/speichersee/ /mnt/backups.disk/speichersee.backups hhs
+    {
+        log retry backup-remote $(find /mnt/data.disk/speichersee.snapshots/ -maxdepth 1 -type d | tail -n1) speichersee@192.168.187.11:/mnt/backups.disk/speichersee/ /mnt/backups.disk/speichersee.backups hhs
+    } &
+    REMOTE_PID=$!
+
+    
 fi
 
-report
+function clean_up {
+    kill $SNAP_PID
+    kill $REMOTE_PID
+
+    report
+    
+    exit
+}
+
+trap clean_up SIGHUP SIGINT SIGTERM
+
+wait $SNAP_PID $REMOTE_PID
+
+

@@ -26,7 +26,7 @@ find ${BASE_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "*.log" | \
   while read LOGFILE
   do
     echo -n "$(basename --suffix=.log "${LOGFILE}"): " | tee -a ${MAILBODY}
-    { [ $(echo "exitcode 0" | grep 'exitcode 0' | wc -l) -eq 1 ] && echo ✅ || echo ❌; } | tee -a ${MAILBODY}
+    { [ $(tail -n1 ${LOGFILE} | grep 'exitcode 0' | wc -l) -eq 1 ] && echo ✅ || echo ❌; } | tee -a ${MAILBODY}
   done
 
 echo;
