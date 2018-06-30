@@ -1,34 +1,11 @@
 # cron based backup toolkit for btrfs filesystem
 
-<<<<<<< HEAD
-These scripts are explicitly made for my personal NAS setup.
-=======
 These scripts are explicitly made for my personal NAS setup, also most of them are kinda hacky - use with care :)
->>>>>>> readme update
 
 Feel free to fork & adapt, but please to not expect me to change anything for your setup (I'm happy to help tho, also feedback is highly appreciated)
 
 ## Our Setup
 
-<<<<<<< HEAD
-We are running two (almost) identical Ubuntu 18.04 LTS systems:
-
-- "Datenteich" is at my place
-- "Speichersee" is at my parents place.
-
-Both NAS have two data drives:
-
-- 24/7 drive (`/mnt/data.disk`) and
-- backup disk (`/mnt/backup.disk`).
-
-We use [Resilio](https://www.resilio.com/individuals/) to sync important and/or actively used data between our machines (mainly MacBooks, but also Windows systems and iPhones) and store everything else directly on the NAS systems.
-
-This toolkit helps backing up the data so that we can follow the 3-2-1 rule. Most data is actually stored on 5+ systems :)
-
-## Todos
-
-- Add "Aussenbecken" to the setup
-=======
 We are running two (almost) identical servers plus one small NAS:
 
 - "Datenteich" at our place (running Ubuntu 18.04 LTS / i3-8100 / 32GB / H370)
@@ -56,7 +33,6 @@ This toolkit helps backing up the data so that we can follow the 3-2-1 rule (its
 3.  MacBooks backing up to "home servers" backup disk ("Datenteich" or "Speichersee")
 
 Call me paraniod, thats fine 🤷‍♂️ Also 🍪 for everyone spotting the weak point (there is one).
->>>>>>> readme update
 
 ### `crontab`
 
