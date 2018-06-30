@@ -30,6 +30,7 @@ find ${BASE_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "*.log" | \
   done
 
 echo;
+echo;
 echo -e ======================================= "\n" | tee -a ${MAILBODY}
 
 ${BASE_PATH}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') | tee -a ${MAILBODY}

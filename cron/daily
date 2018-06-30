@@ -4,10 +4,14 @@
 
 PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd ../bin && pwd):${PATH}"
 
+log snapshot-create /mnt/data.disk/resilio /mnt/data.disk/resilio.snapshots
 log snapshot-cleanup /mnt/data.disk/resilio.snapshots
 
 if [ "$(hostname)" == "Datenteich" ]
 then
+    log snapshot-create /mnt/data.disk/datenteich /mnt/data.disk/datenteich.snapshots
+    log snapshot-create /mnt/boot.disk/rootfs /mnt/boot.disk/rootfs.snapshots
+
     log snapshot-cleanup /mnt/data.disk/datenteich.snapshots
     log snapshot-cleanup /mnt/boot.disk/rootfs.snapshots
 
@@ -19,13 +23,15 @@ then
     SNAP_PID=$!
 
     {
-        log retry backup-remote $(find /mnt/data.disk/datenteich.snapshots/ -maxdepth 1 -type d | tail -n1) datenteich@192.168.152.11:/mnt/backups.disk/datenteich/ /mnt/backups.disk/datenteich.backups bms
+        log retry backup-remote $(find /mnt/data.disk/datenteich.snapshots/ -maxdepth 1 -type d | tail -n1)/ datenteich@192.168.152.11:/mnt/backups.disk/datenteich/ /mnt/backups.disk/datenteich.backups bms
     } &
     REMOTE_PID=$!
 fi
 
 if [ "$(hostname)" == "Speichersee" ]
 then
+    log snapshot-create /mnt/data.disk/speichersee /mnt/data.disk/speichersee.snapshots
+    
     log snapshot-cleanup /mnt/data.disk/speichersee.snapshots
 
     {
@@ -34,7 +40,7 @@ then
     SNAP_PID=$!
 
     {
-        log retry backup-remote $(find /mnt/data.disk/speichersee.snapshots/ -maxdepth 1 -type d | tail -n1) speichersee@192.168.187.11:/mnt/backups.disk/speichersee/ /mnt/backups.disk/speichersee.backups hhs
+        log retry backup-remote $(find /mnt/data.disk/speichersee.snapshots/ -maxdepth 1 -type d | tail -n1)/ speichersee@192.168.187.11:/mnt/backups.disk/speichersee/ /mnt/backups.disk/speichersee.backups hhs
     } &
     REMOTE_PID=$!
 
@@ -42,15 +48,16 @@ then
 fi
 
 function clean_up {
-    kill $SNAP_PID
-    kill $REMOTE_PID
+    trap - EXIT
+    kill $SNAP_PID >/dev/null 2>/dev/null
+    kill $REMOTE_PID >/dev/null 2>/dev/null
 
     report
-    
+
     exit
 }
 
-trap clean_up SIGHUP SIGINT SIGTERM
+trap clean_up EXIT SIGHUP SIGINT SIGTERM
 
 wait $SNAP_PID $REMOTE_PID
 

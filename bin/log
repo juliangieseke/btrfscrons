@@ -12,20 +12,27 @@ BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 MAILTO="julian.gieseke@gmail.com"
 LOGFILE="${BASE_PATH}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
 
-if [ "${1}" == "retry" ]
-then
-  LOGFILE="${BASE_PATH}/log/$(basename ${2}).$(printf '%x' $(date +%s%N)).log"
-fi
-
-[ ! -f "${LOGFILE}" ] && touch ${LOGFILE}
-
 #first param is subscript name
 SUBSCRIPT=${1}
 
 #remove first parameter from list
 shift
 
+# update logfilename is retry is passed as next script
+if [ "${SUBSCRIPT}" == "retry" ]
+then
+  LOGFILE="${BASE_PATH}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
+fi
+
 # run backup job
-annotate-output '+%F %T' ${SUBSCRIPT} "$@" > >(tee -a ${LOGFILE}) 2> >(tee -a ${LOGFILE} >&1) \
-  || echo -e "Subject: ❌ Error in $(basename ${SUBSCRIPT}) $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
+annotate-output '+%F %T' ${SUBSCRIPT} "$@" | tee ${LOGFILE};
+EC=${PIPESTATUS[0]}
+
+# send mail if failed
+if [ ${EC} -ne 0 ]
+then
+  echo -e "Subject: ❌ Error ${EC} in ${SUBSCRIPT} $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
   || cat ${LOGFILE}
+fi
+
+exit $EC

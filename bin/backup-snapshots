@@ -8,6 +8,29 @@ DEBUG=${DEBUG:-''}
 # set BASE_PATH
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
+DST_SNAP=${1:-''}
+DST_SEND=${2:-''}
+
+PARENT=''
+SNAP_TO_BACKUP=0
+
+# first see if there is anything to back up to make sure
+# we're stopping netatalk for a reason
+find ${DST_SNAP%/}/ -mindepth 1 -maxdepth 1 -type d | while read SNAPSHOT
+do
+  SNAPSHOT="$(basename ${SNAPSHOT})"
+  if [ ! -d "${DST_SEND%/}/${SNAPSHOT}" ]
+  then
+    SNAP_TO_BACKUP=$(( SNAP_TO_BACKUP + 1 ))
+  fi
+done
+
+# exit if nothing to backup
+if [ ${SNAP_TO_BACKUP} -eq 0 ]
+then
+  echo "No snapshots to backup."
+  exit 0
+fi
 
 # exit trap
 function teardown {
@@ -27,7 +50,7 @@ echo $$ 1>&200
 
 trap teardown EXIT SIGINT
 
-# # TM keeps connection open :(
+# # TM keeps connection open, this doesnt work :(
 # while [ $(lsof | grep /mnt/timemachine | wc -l) -ne 0 ]
 # do
 #   echo "Time Machine running, waiting…" 1>&2
@@ -37,13 +60,7 @@ trap teardown EXIT SIGINT
 # stop netatalk to prevent tm backups during btrfs send | btrfs receive
 systemctl stop netatalk && echo "Stopped netatalk."
 
-
-DST_SNAP=${1:-''}
-DST_SEND=${2:-''}
-
-PARENT=''
-
-# first sync (new) snapshots to DST_SEND
+# sync (new) snapshots to DST_SEND
 find ${DST_SNAP%/}/ -mindepth 1 -maxdepth 1 -type d | while read SNAPSHOT
 do
   SNAPSHOT="$(basename ${SNAPSHOT})"
