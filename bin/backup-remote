@@ -20,39 +20,45 @@ VPN_CONF="${4:-''}"
 DST_USER="$(echo "${DST_REMOTE}" | cut -d@ -f1)"
 DST_HOST="$(echo "${DST_REMOTE}" | cut -d@ -f2 | cut -d: -f1)"
 RSYNCOPTS="${RSYNCOPTS:-""}"
-
+VPN_CONNECTED=0
 
 # exit trap
 function teardown {
+  # echo "connected? ${VPN_CONNECTED}, teardown arguments: $@"
   trap - EXIT
-
-  # grep itself is listed in top, that swhy we check for 1
-  if [ "$(top -cbn1 | grep ${DST_USER}@${DST_HOST} | wc -l)" -eq 1 ]
+  if [ ${VPN_CONNECTED} -eq 1 ]
   then
-    /usr/sbin/vpnc-disconnect
+    /usr/sbin/vpnc-disconnect 2>&1 >/dev/null || true
   fi
-
-  flock --unlock 200
+  flock --unlock 200 || exit 201
 }
 
+# setup lockfile - unlock in trap
 exec 200>"${BASE_PATH}/lock/backup-remote.lock"
-flock -n 200 || exit 7
+flock -n 200 || exit 200
 echo $$ 1>&200
 
+# connecting to VPN - disconnect in trap
+if /usr/sbin/vpnc-connect ${VPN_CONF}
+then
+  echo "Connected to VPN (${VPN_CONF})"
+  VPN_CONNECTED=1
+else
+  echo "ERROR: Failed to connect to VPN (${VPN_CONF})" 1>&2
+fi
+
+# setup trap
 trap teardown EXIT SIGINT
 
+# build options
 if [ -n "${DST_REMOTE_BACKUPDIR}" ]
 then
   RSYNCOPTS="${RSYNCOPTS} --protect-args --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F-%H-%M-%S)/"
 fi
+RSYNCOPTS="${RSYNCOPTS} --partial --compress --no-inc-recursive "
 
-if [ -n "${VPN_CONF}" ] && [ $(ping -W 5 -c 1 ${DST_HOST} > /dev/null; echo $?) -ne 0 ]
-then
-  echo "Cannot ping Host, trying to connect to VPN (Host: ${DST_HOST})" 1>&2
-  /usr/sbin/vpnc-connect ${VPN_CONF} || echo "Failed to connect to VPN, already connected?" 1>&2
-fi
-
-RSYNCOPTS="${RSYNCOPTS} --partial --compress --no-inc-recursive " ${BASE_PATH}/bin/backup-rsync "${SRC}" "${DST_REMOTE}"
+# run rsync backup
+${BASE_PATH}/bin/backup-rsync "${SRC}" "${DST_REMOTE}"
 
 # remove locally deleted files on remote after 90 days
 [ -n "${DST_REMOTE_BACKUPDIR}" ] \
