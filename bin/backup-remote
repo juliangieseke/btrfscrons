@@ -55,7 +55,7 @@ if [ -n "${DST_REMOTE_BACKUPDIR}" ]
 then
   RSYNCOPTS="${RSYNCOPTS} --protect-args --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F-%H-%M-%S)/"
 fi
-RSYNCOPTS="${RSYNCOPTS} --partial --compress --no-inc-recursive "
+RSYNCOPTS="${RSYNCOPTS} --partial --compress"
 
 # run rsync backup
 ${BASE_PATH}/bin/backup-rsync "${SRC}" "${DST_REMOTE}"
