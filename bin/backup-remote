@@ -58,7 +58,7 @@ fi
 RSYNCOPTS="${RSYNCOPTS} --partial --compress"
 
 # run rsync backup
-${BASE_PATH}/bin/backup-rsync "${SRC}" "${DST_REMOTE}"
+RSYNCOPTS="${RSYNCOPTS}" ${BASE_PATH}/bin/backup-rsync "${SRC}" "${DST_REMOTE}"
 
 # remove locally deleted files on remote after 90 days
 [ -n "${DST_REMOTE_BACKUPDIR}" ] \
