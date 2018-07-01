@@ -10,23 +10,23 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-# set BASE_PATH
-BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
-
-SRC="${1:-''}"
-DST_REMOTE="${2:-''}"
-DST_REMOTE_BACKUPDIR="${3:-''}"
-VPN_CONF="${4:-''}"
-DST_USER="$(echo "${DST_REMOTE}" | cut -d@ -f1)"
-DST_HOST="$(echo "${DST_REMOTE}" | cut -d@ -f2 | cut -d: -f1)"
 RSYNCOPTS="${RSYNCOPTS:-""}"
-VPN_CONNECTED=0
+
+# set base_path
+base_path="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+
+src_path="${1:-''}"
+dst_path="${2:-''}"
+dst_bkp_dir="${3:-''}"
+dst_credentials="$(echo "${dst_path}" | cut -d: -f1)"
+vpn_conf="${4:-''}"
+vpn_connected=0
 
 # exit trap
 function teardown {
-  # echo "connected? ${VPN_CONNECTED}, teardown arguments: $@"
+  # echo "connected? ${vpn_connected}, teardown arguments: $@"
   trap - EXIT
-  if [ ${VPN_CONNECTED} -eq 1 ]
+  if [ ${vpn_connected} -eq 1 ]
   then
     /usr/sbin/vpnc-disconnect 2>&1 >/dev/null || true
   fi
@@ -34,33 +34,33 @@ function teardown {
 }
 
 # setup lockfile - unlock in trap
-exec 200>"${BASE_PATH}/lock/backup-remote.lock"
+exec 200>"${base_path}/lock/backup-remote.lock"
 flock -n 200 || exit 200
 echo $$ 1>&200
 
 # connecting to VPN - disconnect in trap
-if /usr/sbin/vpnc-connect ${VPN_CONF}
+if /usr/sbin/vpnc-connect ${vpn_conf}
 then
-  echo "Connected to VPN (${VPN_CONF})"
-  VPN_CONNECTED=1
+  echo "Connected to VPN (${vpn_conf})"
+  vpn_connected=1
 else
-  echo "ERROR: Failed to connect to VPN (${VPN_CONF})" 1>&2
+  echo "ERROR: Failed to connect to VPN (${vpn_conf})" 1>&2
 fi
 
 # setup trap
 trap teardown EXIT SIGINT
 
 # build options
-if [ -n "${DST_REMOTE_BACKUPDIR}" ]
+if [ -n "${dst_bkp_dir}" ]
 then
-  RSYNCOPTS="${RSYNCOPTS} --protect-args --backup --backup-dir=${DST_REMOTE_BACKUPDIR%/}/$(date +%F-%H-%M-%S)/"
+  RSYNCOPTS="${RSYNCOPTS} --protect-args --backup --backup-dir=${dst_bkp_dir%/}/$(date +%F-%H-%M-%S)/"
 fi
 RSYNCOPTS="${RSYNCOPTS} --partial --compress"
 
 # run rsync backup
-RSYNCOPTS="${RSYNCOPTS}" ${BASE_PATH}/bin/backup-rsync "${SRC}" "${DST_REMOTE}"
+RSYNCOPTS="${RSYNCOPTS}" ${base_path}/bin/backup-rsync "${src_path}" "${dst_path}"
 
 # remove locally deleted files on remote after 90 days
-[ -n "${DST_REMOTE_BACKUPDIR}" ] \
-  && ssh ${DST_USER}@${DST_HOST} \
-    find "${DST_REMOTE_BACKUPDIR}" -mindepth 1 -maxdepth 1 -type d -ctime 90 -exec "echo Deleting remote backup directory '{}' \;" -exec "rm -rf '{}' \;"
+[ -n "${dst_bkp_dir}" ] \
+  && ssh ${dst_credentials} \
+    find "${dst_bkp_dir}" -mindepth 1 -maxdepth 1 -type d -ctime 90 -exec "echo Deleting remote backup directory '{}' \;" -exec "rm -rf '{}' \;"
