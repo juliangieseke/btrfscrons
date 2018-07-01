@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+jobtype=${1:-''}
+if [ -z "${jobtype}" ]
+then
+  echo "ERROR: No \$jobtype given (usage: keepdays <jobtype>)" 2>&1
+  exit 1
+fi
+
+# prevent deletion of everything in case of error
+keepdays=999
+
+case ${jobtype} in
+  hourly)
+    keepdays=1
+    ;;
+  daily)
+    keepdays=30
+    ;;
+  weekly)
+    keepdays=90
+    ;;
+  monthly)
+    keepdays=360
+    ;;
+esac
+
+
+echo ${keepdays}
+exit 0

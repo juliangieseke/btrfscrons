@@ -5,14 +5,12 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-# set SCRIPT_PATH
-SCRIPT_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && pwd)"
-
-SRC="${1:-''}"
-DST="${2:-''}"
 RSYNCOPTS="${RSYNCOPTS:-""}"
+
+src_path="${1:-''}"
+dst_path="${2:-''}"
 
 RSYNCOPTS="${RSYNCOPTS} --verbose --stats --recursive --links --perms --times --group --owner --devices --specials --delete --delete-excluded --prune-empty-dirs"
 
-echo "Starting rsync Backup (cmd: /usr/bin/rsync $RSYNCOPTS \"${SRC}\" \"${DST}\")"
-/usr/bin/rsync $RSYNCOPTS "${SRC}" "${DST}"
+echo "Starting rsync Backup (cmd: /usr/bin/rsync $RSYNCOPTS \"${src_path}\" \"${dst_path}\")"
+/usr/bin/rsync $RSYNCOPTS "${src_path}" "${dst_path}"

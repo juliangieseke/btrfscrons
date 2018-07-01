@@ -8,13 +8,13 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-DST=${1:-''}
+base_path="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+dst_path=${1:-''}
 
-BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-JOBTYPES=( hourly daily weekly monthly )
-for JOBTYPE in "${JOBTYPES[@]}"
+jobtypes=( hourly daily weekly monthly )
+for jobtype in "${jobtypes[@]}"
 do
-    KEEPDAYS=$(${BASE_PATH}/bin/get-keepdays ${JOBTYPE})
-    find "${DST%/}/" -maxdepth 1 -type d -name "*${JOBTYPE}*" -ctime +${KEEPDAYS} -exec ${BASE_PATH}/bin/snapshot-delete '{}' \;
+    keepdays=$(${base_path}/bin/keepdays ${jobtype})
+    find "${dst_path%/}/" -maxdepth 1 -type d -name "*${jobtype}*" -ctime +${keepdays} -exec ${base_path}/bin/snapshot-delete '{}' \;
 done

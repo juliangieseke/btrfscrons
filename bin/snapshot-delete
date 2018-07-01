@@ -5,6 +5,6 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-SNAPSHOT=${1:-''}
+snapshot_pathname=${1:-''}
 
-btrfs subvolume delete ${SNAPSHOT}
+btrfs subvolume delete ${snapshot_pathname}

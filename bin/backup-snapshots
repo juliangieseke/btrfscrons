@@ -5,28 +5,27 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-# set BASE_PATH
-BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+# set base_path
+base_path="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-DST_SNAP=${1:-''}
-DST_SEND=${2:-''}
+src_path=${1:-''}
+dst_path=${2:-''}
+snapshots_to_sync=0
+snapshot_parent=''
 
-PARENT=''
-SNAP_TO_BACKUP=0
 
 # first see if there is anything to back up to make sure
 # we're stopping netatalk for a reason
-find ${DST_SNAP%/}/ -mindepth 1 -maxdepth 1 -type d | while read SNAPSHOT
+find ${src_path%/}/ -mindepth 1 -maxdepth 1 -type d | while read snapshot_pathname
 do
-  SNAPSHOT="$(basename ${SNAPSHOT})"
-  if [ ! -d "${DST_SEND%/}/${SNAPSHOT}" ]
+  if [ ! -d "${dst_path%/}/$(basename ${snapshot_pathname})" ]
   then
-    SNAP_TO_BACKUP=$(( SNAP_TO_BACKUP + 1 ))
+    snapshots_to_sync=$(( snapshots_to_sync + 1 ))
   fi
 done
 
 # exit if nothing to backup
-if [ ${SNAP_TO_BACKUP} -eq 0 ]
+if [ ${snapshots_to_sync} -eq 0 ]
 then
   echo "No snapshots to backup."
   exit 0
@@ -44,7 +43,7 @@ function teardown {
   flock --unlock 200
 }
 
-exec 200>${BASE_PATH}/lock/backup-snapshots.lock
+exec 200>${base_path}/lock/backup-snapshots.lock
 flock -n 200 || exit 7
 echo $$ 1>&200
 
@@ -60,47 +59,47 @@ trap teardown EXIT SIGINT
 # stop netatalk to prevent tm backups during btrfs send | btrfs receive
 systemctl stop netatalk && echo "Stopped netatalk."
 
-# sync (new) snapshots to DST_SEND
-find ${DST_SNAP%/}/ -mindepth 1 -maxdepth 1 -type d | while read SNAPSHOT
+# sync (new) snapshots to dst_path
+find ${src_path%/}/ -mindepth 1 -maxdepth 1 -type d | while read snapshot_pathname
 do
-  SNAPSHOT="$(basename ${SNAPSHOT})"
-  if [ ! -d "${DST_SEND%/}/${SNAPSHOT}" ]
+  snapshot_basename="$(basename ${snapshot_pathname})"
+  if [ ! -d "${dst_path%/}/${snapshot_basename}" ]
   then
-    if [ -n "${PARENT}" ]
+    if [ -n "${snapshot_parent}" ]
     then
-      echo "Sending incremental snapshot '${SNAPSHOT}' with parent '${PARENT}'."
-      btrfs send -p "${DST_SNAP%/}/${PARENT}" "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
+      echo "Sending incremental snapshot '${snapshot_basename}' with snapshot_parent '${snapshot_parent}'."
+      btrfs send -p "${src_path%/}/${snapshot_parent}" "${src_path%/}/${snapshot_basename}" | btrfs receive "${dst_path%/}/" \
         || {
           echo "ERROR: btrfs receive failed, trying to clean up" 1>&2
-          [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}" \
-            || [ -d ${DST_SEND%/}/${PARENT} ] &&  ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${PARENT}"
+          [ -d ${dst_path%/}/${snapshot_basename} ] && ${base_path}/bin/snapshot-delete "${dst_path%/}/${snapshot_basename}" \
+            || [ -d ${dst_path%/}/${snapshot_parent} ] &&  ${base_path}/bin/snapshot-delete "${dst_path%/}/${snapshot_parent}"
           exit 1
         }
     else
-      echo "Sending initial snapshot '${SNAPSHOT}'."
-      btrfs send "${DST_SNAP%/}/${SNAPSHOT}" | btrfs receive "${DST_SEND%/}/" \
+      echo "Sending initial snapshot '${snapshot_basename}'."
+      btrfs send "${src_path%/}/${snapshot_basename}" | btrfs receive "${dst_path%/}/" \
         || {
           echo "ERROR: btrfs receive failed, trying to clean up"
-          [ -d ${DST_SEND%/}/${SNAPSHOT} ] && ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+          [ -d ${dst_path%/}/${snapshot_basename} ] && ${base_path}/bin/snapshot-delete "${dst_path%/}/${snapshot_basename}"
           exit 1
         }
     fi
     echo "Verifying sent snapshot"
-    if [ -z "$(btrfs subvolume show "${DST_SEND%/}/${SNAPSHOT}" | grep readonly)" ]
+    if [ -z "$(btrfs subvolume show "${dst_path%/}/${snapshot_basename}" | grep readonly)" ]
     then
       echo "ERROR: Sent snapshot is not readonly, deleting it" 1>&2
-      ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+      ${base_path}/bin/snapshot-delete "${dst_path%/}/${snapshot_basename}"
     fi
   fi
-  PARENT=${SNAPSHOT}
+  snapshot_parent=${snapshot_basename}
 done
 
-# now delete old snapshots from DST_SEND
-find ${DST_SEND%/}/ -mindepth 1 -maxdepth 1 -type d | while read SNAPSHOT
+# now delete old snapshots from dst_path
+find ${dst_path%/}/ -mindepth 1 -maxdepth 1 -type d | while read snapshot_pathname
 do
-  SNAPSHOT="$(basename ${SNAPSHOT})"
-  if [ ! -d "${DST_SNAP%/}/${SNAPSHOT}" ]
+  snapshot_basename="$(basename ${snapshot_pathname})"
+  if [ ! -d "${src_path%/}/${snapshot_basename}" ]
   then
-    ${BASE_PATH}/bin/snapshot-delete "${DST_SEND%/}/${SNAPSHOT}"
+    ${base_path}/bin/snapshot-delete "${dst_path%/}/${snapshot_basename}"
   fi
 done

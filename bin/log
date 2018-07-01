@@ -8,33 +8,32 @@ DEBUG=${DEBUG:-''}
 RSYNCOPTS="${RSYNCOPTS:-""}"
 
 # set some vars
-BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
-MAILTO="julian.gieseke@gmail.com"
-LOGFILE="${BASE_PATH}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
-EC=0 
-SUBSCRIPT=''
+base_path="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+mailto="julian.gieseke@gmail.com"
+logfile_pathname="${base_path}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
+exitcode=0 
+child_process=''
 
-SUBSCRIPT=${1}
-shift
+child_process="${1}" && shift
 
-# update logfilename if retry is passed as next script
-if [ "${SUBSCRIPT}" == "retry" ]
+# update logfile_pathname if retry is passed as next script
+if [ "${child_process}" == "retry" ]
 then
-  LOGFILE="${BASE_PATH}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
+  logfile_pathname="${base_path}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
 fi
 
 # run backup job
-echo "🎬 ${SUBSCRIPT} $@ 📅 $(date)" | tee ${LOGFILE}
-${SUBSCRIPT} "$@" 2>&1 | tee -a ${LOGFILE}
-EC=${PIPESTATUS[0]}
+echo "🎬 ${child_process} $@ 📅 $(date)" | tee ${logfile_pathname}
+${child_process} "$@" 2>&1 | tee -a ${logfile_pathname}
+exitcode=${PIPESTATUS[0]}
 
 # send mail if failed
-if [ ${EC} -ne 0 ]
+if [ ${exitcode} -ne 0 ]
 then
-  echo "❌ ${SUBSCRIPT} $@ 🛑 ${EC} 📅 $(date)"
-  echo -e "Subject: ❌ Error ${EC} in ${SUBSCRIPT} $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} || cat ${LOGFILE} 1>&2
+  echo "❌ ${child_process} $@ 📅 $(date) 🛑 ${exitcode}" | tee -a ${logfile_pathname}
+  echo -e "Subject: ❌ Error ${exitcode} in ${child_process} $@\n\n$(cat ${logfile_pathname})" | ssmtp ${mailto} || cat ${logfile_pathname} 1>&2
 else
-  echo "✅ ${SUBSCRIPT} $@ 📅 $(date)" | tee -a ${LOGFILE}
+  echo "✅ ${child_process} $@ 📅 $(date)" | tee -a ${logfile_pathname}
 fi
 
-exit $EC
+exit $exitcode

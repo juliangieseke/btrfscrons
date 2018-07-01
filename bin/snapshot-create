@@ -8,29 +8,26 @@ set -e
 DEBUG=${DEBUG:-''}
 [ -n "${DEBUG}" ] && set -x
 
-SRC=${1:-''}
-if [ -z "${SRC}" ]
+src_path=${1:-''}
+if [ -z "${src_path}" ]
 then
-  echo "ERROR: No \$SRC given." 2>&1
+  echo "ERROR: No \$src_path given." 2>&1
   exit 1
 fi
 
-DST=${2:-''}
-if [ -z "${DST}" ]
+dst_path=${2:-''}
+if [ -z "${dst_path}" ]
 then
-  echo "ERROR: No \$DST given." 2>&1
+  echo "ERROR: No \$dst_path given." 2>&1
   exit 1
 fi
 
-BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+base_path="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-JOBTYPE=$(${BASE_PATH}/bin/get-jobtype ${DST})
-KEEPDAYS=$(${BASE_PATH}/bin/get-keepdays ${JOBTYPE})
+snapshot_name="$(date '+%F-%H-%M-%S')-$(${base_path}/bin/jobtype ${dst_path})"
+[ -d "${dst_path%/}/${snapshot_name}" ] && ( echo "ERROR: '${snapshot_name}' already exists."; exit 1 )
 
-SNAPSHOTNAME="$(date '+%F-%H-%M-%S')-${JOBTYPE}"
-[ -d "${DST%/}/${SNAPSHOTNAME}" ] && ( echo "ERROR: '${SNAPSHOTNAME}' already exists."; exit 1 )
+# update timestamp for find commands - this also fails if src_path is ""
+touch ${src_path}
 
-# update timestamp for find commands - this also fails if SRC is ""
-touch ${SRC}
-
-btrfs subvolume snapshot -r "${SRC}" "${DST%/}/${SNAPSHOTNAME}"
+btrfs subvolume snapshot -r "${src_path}" "${dst_path%/}/${snapshot_name}"

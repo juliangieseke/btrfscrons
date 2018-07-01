@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+snapshots_path=${1:-''}
+if [ -z "${snapshots_path}" ]
+then
+  echo "ERROR: No \$snapshots_path given (usage: jobtype <snapshots_path>)." 2>&1
+  exit 1
+fi 
+
+jobtype='hourly'
+
+if [ $(find "${snapshots_path%/}/" -maxdepth 1 -type d -name "*-daily" -ctime -1 | wc -l) -eq 0 ]
+then
+  jobtype='daily'
+fi
+
+if [ $(find "${snapshots_path%/}/" -maxdepth 1 -type d -name "*-weekly" -ctime -7 | wc -l) -eq 0 ]
+then
+  jobtype='weekly'
+fi
+
+if [ $(find "${snapshots_path%/}/" -maxdepth 1 -type d -name "*-monthly" -ctime -28 | wc -l) -eq 0 ]
+then
+  jobtype='monthly'
+fi
+
+echo ${jobtype}

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
 # example: 
-# /mnt/.bkp/bin/retry subscript whatever subscript params are
+# /mnt/.bkp/bin/retry <child_process> <whatever child_process params are>
+# TODO: add params and add childs params after `--`
 
 set -e
 
@@ -10,21 +11,20 @@ DEBUG=${DEBUG:-''}
 
 RSYNCOPTS="${RSYNCOPTS:-""}"
 
-# set some vars
-BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+child_process=${1} && shift
 
-SUBSCRIPT=${1}
-shift
-
-# run subscript
-RETURN=1
-ATTEMPT=1
-RETRY=3
-while [ ${RETURN} -ne 0 ] && [ ${ATTEMPT} -le ${RETRY} ]
+# run child_process
+exitcode=1
+attempt=1
+max_retries=3
+sleep_time=30
+while [ ${exitcode} -ne 0 ] && [ ${attempt} -le ${max_retries} ]
 do
-  ${SUBSCRIPT} "$@" && RETURN=0 || RETURN=$?
-  [ ${RETURN} -ne 0 ] && echo "${SUBSCRIPT} failed (exit ${RETURN}), trying again in 30s (${ATTEMPT}/3)." 1>&2 && sleep 30
-  ATTEMPT=$[ATTEMPT+1]
+  ${child_process} "$@" && exitcode=0 || exitcode=$?
+  [ ${exitcode} -ne 0 ] \
+    && echo "${child_process} failed (exit ${exitcode}), trying again in ${sleep_time}s (${attempt}/${max_retries})." 1>&2 \
+    && sleep ${sleep_time}
+  attempt=$[attempt+1]
 done
 
-exit $RETURN
+exit $exitcode

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# TODO: refactor this…
+
 set -e
 
 DEBUG=${DEBUG:-''}
@@ -10,42 +12,55 @@ err_report() {
 }
 trap err_report ERR
 
-BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
+base_path="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
-MAILTO="julian.gieseke@gmail.com"
-MAILBODY="${BASE_PATH}/reports/mail.txt"
+mailto="julian.gieseke@gmail.com"
+mailbody_pathname="${base_path}/reports/mail.txt"
+
+open_files="$(lsof | grep '/mnt/.bkp')"
 
 # reset file contents with subject & motd
-echo -e "Todays System Report for $(hostname)\n\n=======================================\n" | tee ${MAILBODY}
-cat /var/run/motd.dynamic | tee -a ${MAILBODY}
-echo -e "=======================================\n" | tee -a ${MAILBODY}
+echo -e "Todays System Report for $(hostname)\n\n=======================================\n" | tee ${mailbody_pathname}
+cat /var/run/motd.dynamic | tee -a ${mailbody_pathname}
+echo -e "=======================================\n" | tee -a ${mailbody_pathname}
 
 # get the last lines of cron logfiles
-echo -e "Exitcodes in Logfiles:\n" | tee -a ${MAILBODY}
-find ${BASE_PATH}/log -mindepth 1 -maxdepth 1 -type f -name "*.log" | \
-  while read LOGFILE
+echo -e "Exitcodes in Logfiles:\n" | tee -a ${mailbody_pathname}
+find ${base_path}/log -mindepth 1 -maxdepth 1 -type f -name "*.log" | \
+  while read logfile_pathname
   do
-    echo -n "$(basename --suffix=.log "${LOGFILE}"): " | tee -a ${MAILBODY}
-    { [ $(tail -n1 ${LOGFILE} | grep '✅' | wc -l) -eq 1 ] && echo ✅ || echo ❌; } | tee -a ${MAILBODY}
+    echo -n "$(basename --suffix=.log "${logfile_pathname}"): " | tee -a ${mailbody_pathname}
+    if [ $(grep ${logfile_pathname} <<< "${open_files}" | wc -l) -ne 0 ]
+    then
+      echo "⌛️" | tee -a ${mailbody_pathname}
+    elif [ $(tail -n1 ${logfile_pathname} | grep '✅' | wc -l) -eq 1 ]
+    then
+      echo "✅" | tee -a ${mailbody_pathname}
+    else 
+      echo "❌" | tee -a ${mailbody_pathname}
+    fi
   done
-
 echo;
 echo;
-echo -e ======================================= "\n" | tee -a ${MAILBODY}
+echo -e ======================================= "\n" | tee -a ${mailbody_pathname}
 
-${BASE_PATH}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') | tee -a ${MAILBODY}
+${base_path}/reports/disks.$(hostname | tr '[:upper:]' '[:lower:]') | tee -a ${mailbody_pathname}
 
-echo -e ======================================= "\n" | tee -a ${MAILBODY}
-
+echo -e ======================================= "\n" | tee -a ${mailbody_pathname}
 
 # send mail with all remaining logfiles as attachements
-cat ${MAILBODY} | mutt -s "System Report for $(hostname)" -a ${BASE_PATH}/log/*.log -- $MAILTO
+cat ${mailbody_pathname} | mutt -s "System Report for $(hostname)" -a ${base_path}/log/* -- $mailto
 
-# delete old logs: 
-find ${BASE_PATH}/log -name '*.log' | \
-  while read LOGFILE
+# delete old logfiles
+find ${base_path}/log -mindepth 1 -maxdepth 1 -type f -name "*.log" | \
+  while read logfile_pathname
   do
-    echo -n "Deleting old logfile $(basename $LOGFILE)… "
-    rm "$LOGFILE"
-    echo "done."
+    if [ $(grep ${logfile_pathname} <<< "${open_files}" | wc -l) -ne 0 ] 
+    then
+      echo "Skipping $(basename $logfile_pathname)"
+    else
+      echo -n "Deleting old logfile $(basename $logfile_pathname)… "
+      rm "$logfile_pathname"
+      echo "done."
+    fi
   done
