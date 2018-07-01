@@ -60,4 +60,7 @@ trap clean_up EXIT SIGHUP SIGINT SIGTERM
 
 wait $SNAP_PID $REMOTE_PID
 
-report
+if [ $(lsof | grep /mnt/.bkp/log/ | wc -l) -eq 0 ]
+then
+    report
+fi
