@@ -11,28 +11,30 @@ RSYNCOPTS="${RSYNCOPTS:-""}"
 BASE_PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 MAILTO="julian.gieseke@gmail.com"
 LOGFILE="${BASE_PATH}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
+EC=0 
+SUBSCRIPT=''
 
-#first param is subscript name
 SUBSCRIPT=${1}
-
-#remove first parameter from list
 shift
 
-# update logfilename is retry is passed as next script
+# update logfilename if retry is passed as next script
 if [ "${SUBSCRIPT}" == "retry" ]
 then
   LOGFILE="${BASE_PATH}/log/$(basename ${1}).$(printf '%x' $(date +%s%N)).log"
 fi
 
 # run backup job
-annotate-output '+%F %T' ${SUBSCRIPT} "$@" | tee ${LOGFILE};
+echo "🎬 ${SUBSCRIPT} $@ 📅 $(date)" | tee ${LOGFILE}
+${SUBSCRIPT} "$@" 2>&1 | tee -a ${LOGFILE}
 EC=${PIPESTATUS[0]}
 
 # send mail if failed
 if [ ${EC} -ne 0 ]
 then
-  echo -e "Subject: ❌ Error ${EC} in ${SUBSCRIPT} $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} \
-  || cat ${LOGFILE}
+  echo "❌ ${SUBSCRIPT} $@ 🛑 ${EC} 📅 $(date)"
+  echo -e "Subject: ❌ Error ${EC} in ${SUBSCRIPT} $@\n\n$(cat ${LOGFILE})" | ssmtp ${MAILTO} || cat ${LOGFILE} 1>&2
+else
+  echo "✅ ${SUBSCRIPT} $@ 📅 $(date)" | tee -a ${LOGFILE}
 fi
 
 exit $EC
