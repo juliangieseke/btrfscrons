@@ -40,12 +40,15 @@ Both crons are independent, `daily` also runs `hourly` scripts
 
 ```
 # create snapshots: btrfs subvolume snapshot -r
-13 * * * * sudo /mnt/.bkp/cron/hourly > /dev/null
+7 1-23 * * * sudo /mnt/.bkp/cron/HOSTNAME.hourly > /dev/null
 
 # create snapshots: btrfs subvolume snapshot -r
 # cleanup snapshots: btrfs subvolume delete
 # backup snapshots: btrfs send | btrfs receive (this disables netatalk)
 # backup remote: rsync
 # report
-13 0 * * * sudo /mnt/.bkp/cron/daily > /dev/null
+13 0 * * * sudo /mnt/.bkp/cron/HOSTNAME.daily > /dev/null
+
+# backup root
+23 * * * 0 sudo /mnt/.bkp/cron/HOSTNAME.weekly > /dev/null
 ```

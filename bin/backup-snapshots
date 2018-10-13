@@ -10,26 +10,8 @@ base_path="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 
 src_path=${1:-''}
 dst_path=${2:-''}
-snapshots_to_sync=0
 snapshot_parent=''
 
-
-# first see if there is anything to back up to make sure
-# we're stopping netatalk for a reason
-find ${src_path%/}/ -mindepth 1 -maxdepth 1 -type d | while read snapshot_pathname
-do
-  if [ ! -d "${dst_path%/}/$(basename ${snapshot_pathname})" ]
-  then
-    snapshots_to_sync=$(( snapshots_to_sync + 1 ))
-  fi
-done
-
-# exit if nothing to backup
-if [ ${snapshots_to_sync} -eq 0 ]
-then
-  echo "No snapshots to backup."
-  exit 0
-fi
 
 # exit trap
 function teardown {
@@ -67,7 +49,7 @@ do
   then
     if [ -n "${snapshot_parent}" ]
     then
-      echo "Sending incremental snapshot '${snapshot_basename}' with snapshot_parent '${snapshot_parent}'."
+      echo "Sending incremental snapshot '${snapshot_basename}' with parent '${snapshot_parent}'."
       btrfs send -p "${src_path%/}/${snapshot_parent}" "${src_path%/}/${snapshot_basename}" | btrfs receive "${dst_path%/}/" \
         || {
           echo "ERROR: btrfs receive failed, trying to clean up" 1>&2

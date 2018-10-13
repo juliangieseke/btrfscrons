@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+# no set -e here, we want to run all subscript, even if one fails!
+
+PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd ../bin && pwd):${PATH}"
+
+log snapshot-create /mnt/boot.disk/root /mnt/boot.disk/root.snapshots
+
+log snapshot-cleanup /mnt/boot.disk/root.snapshots
+
+{
+    log retry backup-snapshots /mnt/boot.disk/root.snapshots /mnt/backups.disk/root.snapshots
+} &
+snapshots_pid=$!
+
+function clean_up {
+    trap - EXIT
+    kill $snapshots_pid >/dev/null 2>/dev/null
+    report
+}
+
+trap clean_up EXIT SIGHUP SIGINT SIGTERM
+
+wait $snapshots_pid

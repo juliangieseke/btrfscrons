@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# no set -e here, we want to run all subscript, even if one fails!
+
+PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd ../bin && pwd):${PATH}"
+
+log snapshot-create /mnt/boot.disk/home /mnt/boot.disk/home.snapshots
+log snapshot-create /mnt/data.disk/resilio /mnt/data.disk/resilio.snapshots
+log snapshot-create /mnt/data.disk/datenteich /mnt/data.disk/datenteich.snapshots
+
+log snapshot-cleanup /mnt/boot.disk/home.snapshots
+log snapshot-cleanup /mnt/data.disk/resilio.snapshots
+log snapshot-cleanup /mnt/data.disk/datenteich.snapshots
+
+{
+    log retry backup-snapshots /mnt/boot.disk/home.snapshots /mnt/backups.disk/home.snapshots
+    log retry backup-snapshots /mnt/data.disk/resilio.snapshots /mnt/backups.disk/resilio.snapshots
+    log retry backup-snapshots /mnt/data.disk/datenteich.snapshots /mnt/backups.disk/datenteich.snapshots
+} &
+snapshots_pid=$!
+
+{
+    log retry backup-remote $(find /mnt/boot.disk/home.snapshots/ -maxdepth 1 -type d | tail -n1)/ datenteich@speichersee.fritz.box:/mnt/backups.disk/home.remote/ /mnt/backups.disk/home.backups bms
+    log retry backup-remote $(find /mnt/data.disk/datenteich.snapshots/ -maxdepth 1 -type d | tail -n1)/ datenteich@speichersee.fritz.box:/mnt/backups.disk/datenteich.remote/ /mnt/backups.disk/datenteich.backups bms
+    log retry backup-remote $(find /mnt/data.disk/datenteich.snapshots/ -maxdepth 1 -type d | tail -n1)/ datenteich@aussenbecken.fritz.box:/volume1/datenteich/datenteich.remote/ /volume1/datenteich/datenteich.backups bss
+} &
+remote_pid=$!
+
+function clean_up {
+    trap - EXIT
+    kill $snapshots_pid >/dev/null 2>/dev/null
+    kill $remote_pid >/dev/null 2>/dev/null
+    report
+}
+
+trap clean_up EXIT SIGHUP SIGINT SIGTERM
+
+wait $snapshots_pid $remote_pid

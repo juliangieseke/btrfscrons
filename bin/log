@@ -30,10 +30,10 @@ exitcode=${PIPESTATUS[0]}
 # send mail if failed
 if [ ${exitcode} -ne 0 ]
 then
-  echo "❌ ${child_process} $@ 📅 $(date) 🛑 ${exitcode}" | tee -a ${logfile_pathname}
+  echo "❌ ${child_process#retry } $@ 📅 $(date) 🛑 ${exitcode}" | tee -a ${logfile_pathname}
   echo -e "Subject: ❌ Error ${exitcode} in ${child_process} $@\n\n$(cat ${logfile_pathname})" | ssmtp ${mailto} || cat ${logfile_pathname} 1>&2
 else
-  echo "✅ ${child_process} $@ 📅 $(date)" | tee -a ${logfile_pathname}
+  echo "✅ ${child_process#retry } $@ 📅 $(date)" | tee -a ${logfile_pathname}
 fi
 
 exit $exitcode

@@ -60,7 +60,7 @@ RSYNCOPTS="${RSYNCOPTS} --partial --compress"
 # run rsync backup
 RSYNCOPTS="${RSYNCOPTS}" ${base_path}/bin/backup-rsync "${src_path}" "${dst_path}"
 
-# remove locally deleted files on remote after 90 days
+# remove locally deleted files on remote after 60 days
 [ -n "${dst_bkp_dir}" ] \
   && ssh ${dst_credentials} \
-    find "${dst_bkp_dir}" -mindepth 1 -maxdepth 1 -type d -ctime 90 -exec "echo Deleting remote backup directory '{}' \;" -exec "rm -rf '{}' \;"
+    find "${dst_bkp_dir}" -mindepth 1 -maxdepth 1 -type d -ctime +60 -exec "echo Deleting remote backup directory '{}' \;" -exec "rm -rf '{}' \;"

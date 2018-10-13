@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# no set -e here, we want to run all subscript, even if one fails!
+
+PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd ../bin && pwd):${PATH}"
+
+log snapshot-create /mnt/data.disk/resilio /mnt/data.disk/resilio.snapshots
+log snapshot-create /mnt/data.disk/speichersee /mnt/data.disk/speichersee.snapshots
+
+log snapshot-cleanup /mnt/data.disk/resilio.snapshots
+log snapshot-cleanup /mnt/data.disk/speichersee.snapshots
+
+{
+    log retry backup-snapshots /mnt/data.disk/speichersee.snapshots /mnt/backups.disk/speichersee.snapshots
+} &
+snapshots_pid=$!
+
+{
+    log retry backup-remote $(find /mnt/data.disk/speichersee.snapshots/ -maxdepth 1 -type d | tail -n1)/ speichersee@datenteich.fritz.box:/mnt/backups.disk/speichersee.remote/ /mnt/backups.disk/speichersee.backups hhs
+    log retry backup-remote $(find /mnt/data.disk/speichersee.snapshots/ -maxdepth 1 -type d | tail -n1)/ speichersee@aussenbecken.fritz.box:/volume1/speichersee/speichersee.remote/ /volume1/speichersee/speichersee.backups bss
+} &
+remote_pid=$!
+
+function clean_up {
+    trap - EXIT
+    kill $snapshots_pid >/dev/null 2>/dev/null
+    kill $remote_pid >/dev/null 2>/dev/null
+    report
+}
+
+trap clean_up EXIT SIGHUP SIGINT SIGTERM
+
+wait $snapshots_pid $remote_pid
