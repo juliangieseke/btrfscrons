@@ -7,4 +7,4 @@ DEBUG=${DEBUG:-''}
 
 snapshot_pathname=${1:-''}
 
-btrfs subvolume delete ${snapshot_pathname}
+btrfs subvolume delete -c ${snapshot_pathname}

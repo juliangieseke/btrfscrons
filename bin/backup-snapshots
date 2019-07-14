@@ -17,10 +17,10 @@ snapshot_parent=''
 function teardown {
   trap - EXIT
   
-  if ! systemctl is-active netatalk > /dev/null
-  then
-    systemctl start netatalk && echo "Started netatalk."
-  fi
+  # if ! systemctl is-active netatalk > /dev/null
+  # then
+  #   systemctl start netatalk && echo "Started netatalk."
+  # fi
 
   flock --unlock 200
 }
@@ -39,7 +39,7 @@ trap teardown EXIT SIGINT
 # done
 
 # stop netatalk to prevent tm backups during btrfs send | btrfs receive
-systemctl stop netatalk && echo "Stopped netatalk."
+# systemctl stop netatalk && echo "Stopped netatalk."
 
 # sync (new) snapshots to dst_path
 find ${src_path%/}/ -mindepth 1 -maxdepth 1 -type d | while read snapshot_pathname
@@ -77,11 +77,11 @@ do
 done
 
 # now delete old snapshots from dst_path
-find ${dst_path%/}/ -mindepth 1 -maxdepth 1 -type d | while read snapshot_pathname
-do
-  snapshot_basename="$(basename ${snapshot_pathname})"
-  if [ ! -d "${src_path%/}/${snapshot_basename}" ]
-  then
-    ${base_path}/bin/snapshot-delete "${dst_path%/}/${snapshot_basename}"
-  fi
-done
+# find ${dst_path%/}/ -mindepth 1 -maxdepth 1 -type d | while read snapshot_pathname
+# do
+#   snapshot_basename="$(basename ${snapshot_pathname})"
+#   if [ ! -d "${src_path%/}/${snapshot_basename}" ]
+#   then
+#     ${base_path}/bin/snapshot-delete "${dst_path%/}/${snapshot_basename}"
+#   fi
+# done

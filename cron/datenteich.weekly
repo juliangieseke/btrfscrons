@@ -6,10 +6,17 @@ PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd ../bin && pwd):${
 
 log snapshot-create /mnt/boot.disk/root /mnt/boot.disk/root.snapshots
 
-log snapshot-cleanup /mnt/boot.disk/root.snapshots
+log snapshot-cleanup /mnt/boot.disk/root.snapshots monthly 30
+log snapshot-cleanup /mnt/boot.disk/root.snapshots weekly 8
+log snapshot-cleanup /mnt/boot.disk/root.snapshots daily 3
+log snapshot-cleanup /mnt/boot.disk/root.snapshots hourly 1
 
 {
     log retry backup-snapshots /mnt/boot.disk/root.snapshots /mnt/backups.disk/root.snapshots
+    log snapshot-cleanup /mnt/backups.disk/root.snapshots monthly 360
+    log snapshot-cleanup /mnt/backups.disk/root.snapshots weekly 90
+    log snapshot-cleanup /mnt/backups.disk/root.snapshots daily 30
+    log snapshot-cleanup /mnt/backups.disk/root.snapshots hourly 1
 } &
 snapshots_pid=$!
 

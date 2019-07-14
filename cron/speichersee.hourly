@@ -4,5 +4,4 @@
 
 PATH="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd ../bin && pwd):${PATH}"
 
-log snapshot-create /mnt/data.disk/resilio /mnt/data.disk/resilio.snapshots
-log snapshot-create /mnt/data.disk/speichersee /mnt/data.disk/speichersee.snapshots
+# log snapshot-create /mnt/data.disk/speichersee /mnt/data.disk/speichersee.snapshots

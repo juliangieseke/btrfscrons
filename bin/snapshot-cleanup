@@ -10,11 +10,7 @@ DEBUG=${DEBUG:-''}
 
 base_path="$(cd $(dirname "$0")/$(dirname "$(readlink "$0")") && cd .. && pwd)"
 dst_path=${1:-''}
+jobtype=${2:-'hourly'}
+keepdays=${3:-'999'}
 
-
-jobtypes=( hourly daily weekly monthly )
-for jobtype in "${jobtypes[@]}"
-do
-    keepdays=$(${base_path}/bin/keepdays ${jobtype})
-    find "${dst_path%/}/" -maxdepth 1 -type d -name "*${jobtype}*" -ctime +${keepdays} -exec ${base_path}/bin/snapshot-delete '{}' \;
-done
+find "${dst_path%/}/" -maxdepth 1 -type d -name "*${jobtype}*" -ctime +${keepdays} -exec ${base_path}/bin/snapshot-delete '{}' \;
